@@ -1,4 +1,4 @@
-package com.command;
+package com;
 
 import com.itextpdf.awt.DefaultFontMapper;
 import com.itextpdf.text.Document;
@@ -12,7 +12,6 @@ import com.bean.MHapInfo;
 import com.bean.Region;
 import com.args.TanghuluArgs;
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.labels.ItemLabelAnchor;
@@ -45,7 +44,7 @@ public class Tanghulu {
     private final Integer SHIFT = 500;
 
     public void tanghulu(TanghuluArgs tanghuluArgs) throws Exception {
-        log.info("command.Tanghulu start!");
+        log.info("Tanghulu start!");
         args = tanghuluArgs;
 
         // 校验命令正确性
@@ -125,7 +124,7 @@ public class Tanghulu {
         }
 
 
-        log.info("command.Tanghulu end!");
+        log.info("Tanghulu end!");
     }
 
     private boolean checkArgs() {

@@ -1,7 +1,6 @@
-package com.command;
+package com;
 
 import com.args.HemiMArgs;
-import com.bean.MHapInfo;
 import com.bean.MHapInfo;
 import com.bean.Region;
 import htsjdk.tribble.readers.TabixReader;
@@ -20,7 +19,7 @@ public class HemiM {
     private final Integer SHIFT = 500;
 
     public void hemiM(HemiMArgs hemiMArgs) throws Exception {
-        log.info("command.HemiM start!");
+        log.info("HemiM start!");
         args = hemiMArgs;
 
         // 校验命令正确性
@@ -213,7 +212,7 @@ public class HemiM {
 
         bufferedWriter.close();
 
-        log.info("command.HemiM end!");
+        log.info("HemiM end!");
     }
 
     private boolean checkArgs() {

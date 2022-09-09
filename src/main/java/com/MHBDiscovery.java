@@ -1,4 +1,4 @@
-package com.command;
+package com;
 
 import com.args.MHBDiscoveryArgs;
 import com.bean.MHBInfo;
@@ -21,7 +21,7 @@ public class MHBDiscovery {
     private final Integer SHIFT = 500;
 
     public void MHBDiscovery(MHBDiscoveryArgs mhbDiscoveryArgs) throws Exception {
-        log.info("command.MHBDiscovery start!");
+        log.info("MHBDiscovery start!");
         args = mhbDiscoveryArgs;
 
         // check the command
@@ -192,7 +192,7 @@ public class MHBDiscovery {
 
 
 
-        log.info("command.MHBDiscovery end!");
+        log.info("MHBDiscovery end!");
     }
 
     private boolean checkArgs() {

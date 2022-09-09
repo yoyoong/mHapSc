@@ -1,4 +1,4 @@
-package com.command;
+package com;
 
 import com.args.R2Args;
 import com.bean.BedInfo;
@@ -50,7 +50,7 @@ public class R2 {
     private final Integer SHIFT = 500;
 
     public void R2(R2Args r2Args) throws Exception {
-        log.info("command.R2 start!");
+        log.info("R2 start!");
         args = r2Args;
 
         // 校验命令正确性
@@ -133,7 +133,7 @@ public class R2 {
             }
         }
 
-        log.info("command.R2 end!");
+        log.info("R2 end!");
     }
 
     private boolean checkArgs() {

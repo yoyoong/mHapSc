@@ -1,16 +1,14 @@
-package com.command;
+package com;
 
 import com.args.TrackArgs;
 import com.bean.MHapInfo;
 import com.bean.Region;
 import htsjdk.tribble.readers.TabixReader;
-import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Track {
     public static final Logger log = LoggerFactory.getLogger(Track.class);
@@ -20,7 +18,7 @@ public class Track {
     private final Integer SHIFT = 500;
 
     public void track(TrackArgs trackArgs) throws Exception {
-        log.info("command.Track start!");
+        log.info("Track start!");
         args = trackArgs;
 
         // 校验命令正确性
@@ -191,7 +189,7 @@ public class Track {
             bufferedWriter.close();
         }
 
-        log.info("command.Track end!");
+        log.info("Track end!");
     }
 
     private boolean checkArgs() {
