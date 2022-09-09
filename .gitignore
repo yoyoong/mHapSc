@@ -1,0 +1,17 @@
+.idea/
+logs/
+target/
+.out*/
+
+#常用input/output文件
+*.gz
+*.txt
+*.tbi
+*.bed
+*.bedGraph
+
+#常用文件格式
+*.pdf
+*.jpg
+*.png
+
