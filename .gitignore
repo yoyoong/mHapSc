@@ -5,10 +5,14 @@ target/
 
 #常用input/output文件
 *.gz
+*.tar
 *.txt
 *.tbi
+*.mhap
 *.bed
 *.bedGraph
+*.wig
+*.bigwig
 
 #常用文件格式
 *.pdf

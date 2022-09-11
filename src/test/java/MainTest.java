@@ -4,6 +4,20 @@ import org.junit.Test;
 
 public class MainTest extends TestCase {
 
+    @Test
+    public void test_convert() throws Exception {
+        Main main = new Main();
+        String arg0 = "convert";
+        String arg1 = "-bedPath";
+        String arg2 = "GSM2697488.bed";
+        String arg3 = "-cpgPath";
+        String arg4 = "hg19_CpG.gz";
+        String arg5 = "-tag";
+        String arg6 = "GSM2697488";
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6};
+
+        main.main(args);
+    }
 
     @Test
     public void test_tanghulu() throws Exception {

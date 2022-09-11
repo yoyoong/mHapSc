@@ -4,18 +4,21 @@ import com.args.*;
 import org.apache.commons.cli.*;
 
 public class Main {
+    static Convert convert = new Convert();
     static Tanghulu tanghulu = new Tanghulu();
     static R2 r2 = new R2();
     static MHBDiscovery mhbDiscovery = new MHBDiscovery();
     static HemiM hemiM = new HemiM();
     static Track track = new Track();
 
-
     public static void main(String[] args) throws Exception {
         System.setProperty("java.awt.headless", "true");
 
         if (args != null && args[0] != null && !"".equals(args[0])) {
-            if (args[0].equals("tanghulu")) {
+            if (args[0].equals("convert")) {
+                ConvertArgs convertArgs = parseConvert(args);
+                convert.convert(convertArgs);
+            } else if (args[0].equals("tanghulu")) {
                 TanghuluArgs tanghuluArgs = parseTanghulu(args);
                 tanghulu.tanghulu(tanghuluArgs);
             } else if (args[0].equals("R2")) {
@@ -36,6 +39,33 @@ public class Main {
         } else { // show the help message
 
         }
+    }
+
+    private static ConvertArgs parseConvert(String[] args) throws ParseException {
+        Options options = new Options();
+        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("bedPath").isRequired().hasArg().withDescription("bedPath").create("bedPath");
+        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
+        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
+        options.addOption(option1).addOption(option2).addOption(option3);
+
+        BasicParser parser = new BasicParser();
+        ConvertArgs convertArgs = new ConvertArgs();
+
+        CommandLine commandLine = parser.parse(options, args);
+        if (commandLine.getOptions().length > 0) {
+            if (commandLine.hasOption('h')) {
+                HelpFormatter hf = new HelpFormatter();
+                hf.printHelp("Options", options);
+            } else {
+                convertArgs.setBedPath(commandLine.getOptionValue("bedPath"));
+                convertArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
+                convertArgs.setTag(commandLine.getOptionValue("tag"));
+            }
+        } else {
+            System.out.println("The paramter is null");
+        }
+
+        return convertArgs;
     }
 
     private static TanghuluArgs parseTanghulu(String[] args) throws ParseException {
