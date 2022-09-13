@@ -3,6 +3,7 @@ package com;
 import com.args.HemiMArgs;
 import com.bean.MHapInfo;
 import com.bean.Region;
+import com.common.Util;
 import htsjdk.tribble.readers.TabixReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ public class HemiM {
     public static final Logger log = LoggerFactory.getLogger(HemiM.class);
 
     HemiMArgs args = new HemiMArgs();
+    Util util = new Util();
     List<Region> regionList = new ArrayList<>();
     private final Integer SHIFT = 500;
 
@@ -31,10 +33,7 @@ public class HemiM {
 
         // get regionList, from region or bedfile
         if (args.getRegion() != null && !args.getRegion().equals("")) {
-            Region region = new Region();
-            region.setChrom(args.getRegion().split(":")[0]);
-            region.setStart(Integer.valueOf(args.getRegion().split(":")[1].split("-")[0]));
-            region.setEnd(Integer.valueOf(args.getRegion().split(":")[1].split("-")[1]));
+            Region region = util.parseRegion(args.getRegion());
             regionList.add(region);
         } else {
             File bedFile = new File(args.getBedFile());
@@ -53,102 +52,26 @@ public class HemiM {
             }
         }
 
-        // 解析bcFile
-        List<String> barcodeList = new ArrayList<>();
-        if (args.getBcFile() != null) {
-            File bcFile = new File(args.getBcFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bcFile));
-            String bcLine = "";
-            while ((bcLine = bufferedReader.readLine()) != null && !bcLine.equals("")) {
-                barcodeList.add(bcLine.split("\t")[0]);
-            }
-        }
+        // parse the barcodefile
+        List<String> barcodeList = util.parseBcFile(args.getBcFile());
 
-        // 创建文件
-        String fileName = args.getTag() + ".hemi-methylation.txt";
-        File file = new File(fileName);
-        if (!file.exists()) {
-            if (!file.createNewFile()) {
-                log.error("create" + file.getAbsolutePath() + "fail");
-                return;
-            }
-        } else {
-            FileWriter fileWriter =new FileWriter(file.getAbsoluteFile());
-            fileWriter.write("");  //写入空
-            fileWriter.flush();
-            fileWriter.close();
-        }
-        FileWriter fileWriter = new FileWriter(file.getAbsoluteFile(), true);
-        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        // create the output directory and file
+        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".hemi-methylation.txt");
 
         for (Region region : regionList) {
-            // 解析mhap文件
-            TabixReader mhapTabixReader = new TabixReader(args.getMhapPath());
-            TabixReader.Iterator mhapIterator = mhapTabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
-            Map<String, List<MHapInfo>> mHapInfoListMap = new HashMap<>(); // mhap数据列表（通过barcode索引）
-            String mHapLine = "";
-            while((mHapLine = mhapIterator.next()) != null) {
-                MHapInfo mHapInfo = new MHapInfo();
-                mHapInfo.setChrom(mHapLine.split("\t")[0]);
-                mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
-                mHapInfo.setEnd(Integer.valueOf(mHapLine.split("\t")[2]));
-                mHapInfo.setCpg(mHapLine.split("\t")[3]);
-                mHapInfo.setCnt(Integer.valueOf(mHapLine.split("\t")[4]));
-                mHapInfo.setStrand(mHapLine.split("\t")[5]);
-                mHapInfo.setBarcode(mHapLine.split("\t")[6]);
+            // parse the mhap file
+            Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
 
-                if (args.getBcFile() != null && !barcodeList.contains(mHapInfo.getBarcode())) {
-                    continue;
-                } else {
-                    if (mHapInfoListMap.containsKey(mHapInfo.getBarcode())) {
-                        List<MHapInfo> mHapInfoList = mHapInfoListMap.get(mHapInfo.getBarcode());
-                        mHapInfoList.add(mHapInfo);
-                    } else {
-                        List<MHapInfo> mHapInfoList = new ArrayList<>();
-                        mHapInfoList.add(mHapInfo);
-                        mHapInfoListMap.put(mHapInfo.getBarcode(), mHapInfoList);
-                    }
-                }
-            }
-
-            // 解析cpg文件
-            List<Integer> cpgPosList = new ArrayList<>();
-            TabixReader cpgTabixReader = new TabixReader(args.getCpgPath());
-            TabixReader.Iterator cpgIterator = cpgTabixReader.query(region.getChrom(),
-                    region.getStart() - SHIFT, region.getEnd() + SHIFT); // 查询范围扩大500
-            String cpgLine = "";
-            while((cpgLine = cpgIterator.next()) != null) {
-                if (cpgLine.split("\t").length < 3) {
-                    continue;
-                } else {
-                    cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
-                }
-            }
+            // parse the cpg file
+            List<Integer> cpgPosList = util.parseCpgFile(args.getCpgPath(), region);
 
             // get cpg site list in region
-            Integer cpgStartPos = region.getStart() > cpgPosList.get(0) ? region.getStart() : cpgPosList.get(0);
-            Integer cpgEndPos = region.getEnd() > cpgPosList.get(cpgPosList.size() - 1) ? cpgPosList.get(cpgPosList.size() - 1) : region.getEnd();
-            for (int i = 0; i < cpgPosList.size(); i++) {
-                if (cpgPosList.get(i) <= cpgStartPos && cpgPosList.get(i + 1) >= cpgStartPos) {
-                    cpgStartPos = i + 1;
-                    break;
-                }
-            }
-            for (int i = 0; i < cpgPosList.size(); i++) {
-                if (cpgPosList.get(i) > cpgEndPos) {
-                    cpgEndPos = i;
-                    break;
-                } else if (cpgPosList.get(i).equals(cpgEndPos)) {
-                    cpgEndPos = i + 1;
-                    break;
-                }
-            }
-            List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos);
+            List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
 
-            Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
+            Iterator<String> iterator = mHapListMap.keySet().iterator();
             while (iterator.hasNext()) {
                 // get mHapInfoList and sorted
-                List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
+                List<MHapInfo> mHapInfoList = mHapListMap.get(iterator.next());
                 Map<Integer, List<MHapInfo>> r2ListMap = mHapInfoList.stream().collect(Collectors.groupingBy(MHapInfo::getStart));
                 List<Map.Entry<Integer, List<MHapInfo>>> r2ListMapSorted = new ArrayList<Map.Entry<Integer, List<MHapInfo>>>(r2ListMap.entrySet());
                 Collections.sort(r2ListMapSorted, new Comparator<Map.Entry<Integer, List<MHapInfo>>>() { //升序排序

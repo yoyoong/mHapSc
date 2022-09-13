@@ -17,8 +17,6 @@ public class Convert {
 
     ConvertArgs args = new ConvertArgs();
     Util util = new Util();
-    Region region = new Region();
-    private final Integer SHIFT = 500;
 
     public void convert(ConvertArgs convertArgs) throws Exception {
         log.info("Convert start!");
@@ -44,22 +42,8 @@ public class Convert {
             }
         });
 
-        // create the output file
-        String fileName = args.getTag() + ".mhap";
-        File file = new File(fileName);
-        if (!file.exists()) {
-            if (!file.createNewFile()) {
-                log.error("create" + file.getAbsolutePath() + "fail");
-                return;
-            }
-        } else {
-            FileWriter fileWriter =new FileWriter(file.getAbsoluteFile());
-            fileWriter.write("");  //写入空
-            fileWriter.flush();
-            fileWriter.close();
-        }
-        FileWriter fileWriter = new FileWriter(file.getAbsoluteFile(), true);
-        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        // create the output directory and file
+        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".mhap");
 
         for (Map.Entry<String, List<ScBedInfo>> scBedList : sortedScBedListMap) {
             System.out.println(scBedList.getKey() + " convert start.");
@@ -126,10 +110,8 @@ public class Convert {
 
 
     private boolean convert(List<ScBedInfo> scBedList, List<Integer> cpgPosList, BufferedWriter bufferedWriter) throws Exception {
-
         String barCode = args.getBedPath().split("\\.")[0];
 
-        Integer cnt = 0;
         Integer startIndex = 0;
         for (int i = 0; i < scBedList.size(); i++) {
             String cpg = "";
@@ -187,7 +169,6 @@ public class Convert {
                 bufferedWriter.write(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos()+ "\t" + scBedList.get(i + expandLength - 1).getPos() + "\t" +
                         "\t" + cpg + "\t" + "-" + "\t" + "1" + "\t" + barCode + "\n");
             }
-
 
             i += expandLength - 1;
             startIndex += expandLength - 1;

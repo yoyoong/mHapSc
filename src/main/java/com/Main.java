@@ -49,8 +49,9 @@ public class Main {
         Options options = new Options();
         Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("bedPath").isRequired().hasArg().withDescription("bedPath").create("bedPath");
         Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
-        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
-        options.addOption(option1).addOption(option2).addOption(option3);
+        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").isRequired().hasArg().withDescription("outputDir").create("outputDir");
+        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
+        options.addOption(option1).addOption(option2).addOption(option3).addOption(option4);
 
         BasicParser parser = new BasicParser();
         ConvertArgs convertArgs = new ConvertArgs();
@@ -63,6 +64,7 @@ public class Main {
             } else {
                 convertArgs.setBedPath(commandLine.getOptionValue("bedPath"));
                 convertArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
+                convertArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
                 convertArgs.setTag(commandLine.getOptionValue("tag"));
             }
         } else {
@@ -81,8 +83,9 @@ public class Main {
 //        Option option5 = OptionBuilder.withArgName("args").withLongOpt("simulation").withDescription("simulation").create("simulation");
         Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("bcFile");
         Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("outcut").hasArg().withDescription("outcut").create("outcut");
-        Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("outputFile").isRequired().hasArg().withDescription("outputFile").create("outputFile");
-        options.addOption(option1).addOption(option2).addOption(option3).addOption(option5).addOption(option6).addOption(option7);
+        Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").isRequired().hasArg().withDescription("outputDir").create("outputDir");
+        Option option8 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
+        options.addOption(option1).addOption(option2).addOption(option3).addOption(option5).addOption(option6).addOption(option7).addOption(option8);
 
         BasicParser parser = new BasicParser();
         TanghuluArgs tanghuluArgs = new TanghuluArgs();
@@ -100,7 +103,8 @@ public class Main {
                 if (commandLine.hasOption("outcut")) {
                     tanghuluArgs.setOutcut(Integer.valueOf(commandLine.getOptionValue("outcut")));
                 }
-                tanghuluArgs.setOutputFile(commandLine.getOptionValue("outputFile"));
+                tanghuluArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
+                tanghuluArgs.setTag(commandLine.getOptionValue("tag"));
             }
         } else {
             System.out.println("The paramter is null");
@@ -111,12 +115,12 @@ public class Main {
 
     private static R2Args parseR2(String[] args) throws ParseException {
         Options options = new Options();
-        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
-        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("mhapPath").isRequired().hasArg().withDescription("mhapPath").create("mhapPath");
-        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
-        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("region").isRequired().hasArg().withDescription("region").create("region");
-        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("bcFile");
-        Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").isRequired().hasArg().withDescription("outputDir").create("outputDir");
+        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("mhapPath").isRequired().hasArg().withDescription("mhapPath").create("mhapPath");
+        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
+        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("region").isRequired().hasArg().withDescription("region").create("region");
+        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("bcFile");
+        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").isRequired().hasArg().withDescription("outputDir").create("outputDir");
+        Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
         Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("mHapView").withDescription("mHapView").create("mHapView");
         Option option8 = OptionBuilder.withArgName("com/args").withLongOpt("strand").hasArg().withDescription("strand").create("strand");
         Option option9 = OptionBuilder.withArgName("com/args").withLongOpt("longrange").withDescription("longrange").create("longrange");
@@ -133,7 +137,6 @@ public class Main {
                 HelpFormatter hf = new HelpFormatter();
                 hf.printHelp("Options", options);
             } else {
-                r2Args.setTag(commandLine.getOptionValue("tag"));
                 r2Args.setMhapPath(commandLine.getOptionValue("mhapPath"));
                 r2Args.setCpgPath(commandLine.getOptionValue("cpgPath"));
                 r2Args.setRegion(commandLine.getOptionValue("region"));
@@ -141,6 +144,7 @@ public class Main {
                     r2Args.setBcFile(commandLine.getOptionValue("bcFile"));
                 }
                 r2Args.setOutputDir(commandLine.getOptionValue("outputDir"));
+                r2Args.setTag(commandLine.getOptionValue("tag"));
                 if (commandLine.hasOption("mHapView")) {
                     r2Args.setMhapView(true);
                 }
@@ -163,18 +167,19 @@ public class Main {
 
     private static MHBDiscoveryArgs parseMHBDiscovery(String[] args) throws ParseException {
         Options options = new Options();
-        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("htGZ").isRequired().hasArg().withDescription("htGZ").create("H");
-        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("bFile").hasArg().withDescription("bFile").create("B");
-        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("S");
-        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("cgGZ").isRequired().hasArg().withDescription("cgGZ").create("C");
-        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("region").hasArg().withDescription("region").create("R");
-        Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("window").hasArg().withDescription("window").create("W");
-        Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("r_square").hasArg().hasArg().withDescription("r_square").create("R2");
-        Option option8 = OptionBuilder.withArgName("com/args").withLongOpt("p_value").hasArg().withDescription("p_value").create("PV");
-        Option option9 = OptionBuilder.withArgName("com/args").withLongOpt("oFile").hasArg().withDescription("oFile").create("O");
-        Option option10 = OptionBuilder.withArgName("com/args").withLongOpt("qc").withDescription("qc").create("QC");
+        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("mhapPath").isRequired().hasArg().withDescription("mhapPath").create("mhapPath");
+        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
+        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("bcFile");
+        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("region").hasArg().withDescription("region").create("region");
+        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("bedFile").hasArg().withDescription("bedFile").create("bedFile");
+        Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("window").hasArg().withDescription("window").create("window");
+        Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("r2").hasArg().hasArg().withDescription("r2").create("r2");
+        Option option8 = OptionBuilder.withArgName("com/args").withLongOpt("pvalue").hasArg().withDescription("pvalue").create("pvalue");
+        Option option9 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").hasArg().withDescription("outputDir").create("outputDir");
+        Option option10 = OptionBuilder.withArgName("com/args").withLongOpt("tag").hasArg().withDescription("tag").create("tag");
+        Option option11 = OptionBuilder.withArgName("com/args").withLongOpt("qc").withDescription("qc").create("qc");
         options.addOption(option1).addOption(option2).addOption(option3).addOption(option4).addOption(option5).
-                addOption(option6).addOption(option7).addOption(option8).addOption(option9).addOption(option10);
+                addOption(option6).addOption(option7).addOption(option8).addOption(option9).addOption(option10).addOption(option11);
 
         BasicParser parser = new BasicParser();
         MHBDiscoveryArgs mhbDiscoveryArgs = new MHBDiscoveryArgs();
@@ -185,28 +190,31 @@ public class Main {
                 HelpFormatter hf = new HelpFormatter();
                 hf.printHelp("Options", options);
             } else {
-                mhbDiscoveryArgs.setmHapPath(commandLine.getOptionValue("H"));
-                if (commandLine.hasOption("R")) {
-                    mhbDiscoveryArgs.setBedFile(commandLine.getOptionValue("R"));
+                mhbDiscoveryArgs.setmHapPath(commandLine.getOptionValue("mhapPath"));
+                mhbDiscoveryArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
+                if (commandLine.hasOption("bcFile")) {
+                    mhbDiscoveryArgs.setBcFile(commandLine.getOptionValue("bcFile"));
                 }
-                if (commandLine.hasOption("S")) {
-                    mhbDiscoveryArgs.setBcFile(commandLine.getOptionValue("S"));
+                if (commandLine.hasOption("region")) {
+                    mhbDiscoveryArgs.setRegion(commandLine.getOptionValue("region"));
                 }
-                mhbDiscoveryArgs.setCpgPath(commandLine.getOptionValue("C"));
-                if (commandLine.hasOption("R")) {
-                    mhbDiscoveryArgs.setRegion(commandLine.getOptionValue("R"));
+                if (commandLine.hasOption("bedFile")) {
+                    mhbDiscoveryArgs.setBedFile(commandLine.getOptionValue("bedFile"));
                 }
-                if (commandLine.hasOption("W")) {
-                    mhbDiscoveryArgs.setWindow(Integer.valueOf(commandLine.getOptionValue("W")));
+                if (commandLine.hasOption("window")) {
+                    mhbDiscoveryArgs.setWindow(Integer.valueOf(commandLine.getOptionValue("window")));
                 }
-                if (commandLine.hasOption("R2")) {
-                    mhbDiscoveryArgs.setrSquare(Double.valueOf(commandLine.getOptionValue("R2")));
+                if (commandLine.hasOption("r2")) {
+                    mhbDiscoveryArgs.setR2(Double.valueOf(commandLine.getOptionValue("r2")));
                 }
-                if (commandLine.hasOption("PV")) {
-                    mhbDiscoveryArgs.setpValue(Double.valueOf(commandLine.getOptionValue("PV")));
+                if (commandLine.hasOption("pvalue")) {
+                    mhbDiscoveryArgs.setPvalue(Double.valueOf(commandLine.getOptionValue("pvalue")));
                 }
-                if (commandLine.hasOption("O")) {
-                    mhbDiscoveryArgs.setOutFile(commandLine.getOptionValue("O"));
+                if (commandLine.hasOption("outputDir")) {
+                    mhbDiscoveryArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
+                }
+                if (commandLine.hasOption("tag")) {
+                    mhbDiscoveryArgs.setTag(commandLine.getOptionValue("tag"));
                 }
                 if (commandLine.hasOption("QC")) {
                     mhbDiscoveryArgs.setQcFlag(true);
@@ -221,13 +229,14 @@ public class Main {
 
     private static HemiMArgs parseHemiM(String[] args) throws ParseException {
         Options options = new Options();
-        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
-        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("mhapPath").isRequired().hasArg().withDescription("mhapPath").create("mhapPath");
-        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
-        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("bFile").hasArg().withDescription("bFile").create("bFile");
-        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("region").hasArg().withDescription("region").create("region");
-        Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("bcFile");
-        options.addOption(option1).addOption(option2).addOption(option3).addOption(option4).addOption(option5).addOption(option6);
+        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("mhapPath").isRequired().hasArg().withDescription("mhapPath").create("mhapPath");
+        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
+        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("bFile").hasArg().withDescription("bFile").create("bFile");
+        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("region").hasArg().withDescription("region").create("region");
+        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("bcFile");
+        Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
+        Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").hasArg().withDescription("outputDir").create("outputDir");
+        options.addOption(option1).addOption(option2).addOption(option3).addOption(option4).addOption(option5).addOption(option6).addOption(option7);
 
         BasicParser parser = new BasicParser();
         HemiMArgs hemiMArgs = new HemiMArgs();
@@ -238,7 +247,6 @@ public class Main {
                 HelpFormatter hf = new HelpFormatter();
                 hf.printHelp("Options", options);
             } else {
-                hemiMArgs.setTag(commandLine.getOptionValue("tag"));
                 hemiMArgs.setMhapPath(commandLine.getOptionValue("mhapPath"));
                 hemiMArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
                 if (commandLine.hasOption("bFile")) {
@@ -250,6 +258,8 @@ public class Main {
                 if (commandLine.hasOption("bcFile")) {
                     hemiMArgs.setBcFile(commandLine.getOptionValue("bcFile"));
                 }
+                hemiMArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
+                hemiMArgs.setTag(commandLine.getOptionValue("tag"));
             }
         } else {
             System.out.println("The paramter is null");

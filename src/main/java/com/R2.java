@@ -65,16 +65,8 @@ public class R2 {
         // parse the region
         region = util.parseRegion(args.getRegion());
 
-        // 解析bcFile
-        List<String> barcodeList = new ArrayList<>();
-        if (args.getBcFile() != null) {
-            File bcFile = new File(args.getBcFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bcFile));
-            String bcLine = "";
-            while ((bcLine = bufferedReader.readLine()) != null && !bcLine.equals("")) {
-                barcodeList.add(bcLine.split("\t")[0]);
-            }
-        }
+        // parse the barcodefile
+        List<String> barcodeList = util.parseBcFile(args.getBcFile());
 
         // parse the mhap file
         Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
@@ -105,62 +97,28 @@ public class R2 {
     }
 
     private boolean getR2(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList) throws Exception {
-        // 创建文件夹
-        File outputDir = new File(args.getOutputDir());
-        if (!outputDir.exists()){
-            if (!outputDir.mkdirs()){
-                log.error("create" + outputDir.getAbsolutePath() + "fail");
-                return false;
-            }
-        }
+        // create the output directory and file
+        String r2FileName = args.getTag() + "_" + region.toFileString() + ".cpg_sites_rsquare.txt";
+        BufferedWriter r2BufferedWriter = util.createOutputFile(args.getOutputDir(), r2FileName);
 
-        // 创建文件
-        String r2FileName = args.getOutputDir() + "/" + args.getTag() + "_" + region.toFileString() + ".cpg_sites_rsquare.txt";
-        File r2File = new File(r2FileName);
-        if (!r2File.exists()) {
-            if (!r2File.createNewFile()){
-                log.error("create" + r2File.getAbsolutePath() + "fail");
-                return false;
-            }
-        } else {
-            FileWriter fileWriter =new FileWriter(r2File.getAbsoluteFile());
-            fileWriter.write("");  //写入空
-            fileWriter.flush();
-            fileWriter.close();
-        }
-        FileWriter r2FileWriter = new FileWriter(r2File.getAbsoluteFile(), true);
-        BufferedWriter r2BufferedWriter = new BufferedWriter(r2FileWriter);
         // 写入文件头部
         String head = "chr" + "\t" + "posi" + "\t" + "posj" + "\t" + "N00" + "\t" + "N01" + "\t"
                 + "N10" + "\t" + "N11" + "\t" + "r2" + "\t" + "pvalue" + "\n";
         r2BufferedWriter.write(head);
 
-        BufferedWriter longrangeBufferedWriter = new BufferedWriter(r2FileWriter);
+        BufferedWriter longrangeBufferedWriter = new BufferedWriter(new FileWriter(r2FileName));
         if (args.isLongrange()) {
-            String longrangeFileName = args.getOutputDir() + "/" + args.getTag() + "_" + region.toFileString() + ".longrange.txt";
-            File longrangeFile = new File(longrangeFileName);
-            if (!longrangeFile.exists()) {
-                if (!longrangeFile.createNewFile()){
-                    log.error("create" + longrangeFile.getAbsolutePath() + "fail");
-                    return false;
-                }
-            } else {
-                FileWriter fileWriter =new FileWriter(longrangeFile.getAbsoluteFile());
-                fileWriter.write("");  //写入空
-                fileWriter.flush();
-                fileWriter.close();
-            }
-            FileWriter longrangeWriter = new FileWriter(longrangeFile.getAbsoluteFile(), true);
-            longrangeBufferedWriter = new BufferedWriter(longrangeWriter);
+            String longrangeFileName = args.getTag() + "_" + region.toFileString() + ".longrange.txt";
+            longrangeBufferedWriter = util.createOutputFile(args.getOutputDir(), longrangeFileName);
         }
 
-        // 提取查询区域内的甲基化位点列表
+        // get cpg site list in region
         List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
 
-        // 计算行数
+        // calculate the row number
         Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
-        // 甲基化状态矩阵 0-未甲基化 1-甲基化
+        // get cpg status matrix in region
         Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
         for (int i = 0; i < cpgPosListInRegion.size(); i++) {
@@ -178,11 +136,8 @@ public class R2 {
             }
         }
 
-
         r2BufferedWriter.close();
-        if (args.isLongrange()) {
-            longrangeBufferedWriter.close();
-        }
+        longrangeBufferedWriter.close();
 
         return true;
     }
@@ -196,7 +151,7 @@ public class R2 {
         Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
+        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosList, mHapListMap);
 
         // 按甲基化比率递减排序
         Arrays.sort(cpgHpMatInRegion, new Comparator<Integer[]>() {
@@ -440,29 +395,10 @@ public class R2 {
         return xyPlot;
     }
 
-    private XYPlot createBedRegionPlot(List<Integer> cpgPosListInRegion) throws IOException {
-        File bedFile = new File(args.getBedFile());
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(bedFile));
-        String bedLine = "";
-        Map<String, List<BedInfo>> bedInfoListMap = new HashMap<>(); // mhap数据列表（通过barcode索引）
-        while ((bedLine = bufferedReader.readLine()) != null) {
-            BedInfo bedInfo = new BedInfo();
-            if (bedLine.split("\t").length >= 4) {
-                bedInfo.setChrom(bedLine.split("\t")[0]);
-                bedInfo.setStart(Integer.valueOf(bedLine.split("\t")[1]));
-                bedInfo.setEnd(Integer.valueOf(bedLine.split("\t")[2]));
-                bedInfo.setBarCode(bedLine.split("\t")[3]);
+    private XYPlot createBedRegionPlot(List<Integer> cpgPosListInRegion) throws Exception {
 
-                if (bedInfoListMap.containsKey(bedInfo.getBarCode())) {
-                    List<BedInfo> bedInfoList = bedInfoListMap.get(bedInfo.getBarCode());
-                    bedInfoList.add(bedInfo);
-                } else {
-                    List<BedInfo> bedInfoList = new ArrayList<>();
-                    bedInfoList.add(bedInfo);
-                    bedInfoListMap.put(bedInfo.getBarCode(), bedInfoList);
-                }
-            }
-        }
+        // parse the bed file
+        Map<String, List<BedInfo>> bedInfoListMap = util.parseBedFile(args.getBedFile());
 
         // 创建数据集
         DefaultXYZDataset dataset = new DefaultXYZDataset();

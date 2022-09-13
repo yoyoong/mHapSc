@@ -4,14 +4,15 @@ import java.io.Serializable;
 
 public class MHBDiscoveryArgs implements Serializable {
     public String mHapPath = ""; // Indexed haplotype file
-    public String bedFile; // BED file
     public String bcFile; // Barcode ID file
     public String cpgPath = ""; // CpG position file
     public String region; // One interval [chr1:1000-2000]
+    public String bedFile; // BED file
     public Integer window = 5; // Size of core window
-    public Double rSquare = 0.5; // R square cutoff
-    public Double pValue = 0.05; // P value cutoff
-    public String outFile; // Output file
+    public Double r2 = 0.5; // R square cutoff
+    public Double pvalue = 0.05; // P value cutoff
+    public String outputDir = ""; // output directory, created in advance
+    public String tag; // prefix of the output files
     public boolean qcFlag = false; // whether output matrics for QC
 
     public String getmHapPath() {
@@ -62,28 +63,36 @@ public class MHBDiscoveryArgs implements Serializable {
         this.window = window;
     }
 
-    public Double getrSquare() {
-        return rSquare;
+    public Double getR2() {
+        return r2;
     }
 
-    public void setrSquare(Double rSquare) {
-        this.rSquare = rSquare;
+    public void setR2(Double r2) {
+        this.r2 = r2;
     }
 
-    public Double getpValue() {
-        return pValue;
+    public Double getPvalue() {
+        return pvalue;
     }
 
-    public void setpValue(Double pValue) {
-        this.pValue = pValue;
+    public void setPvalue(Double pvalue) {
+        this.pvalue = pvalue;
     }
 
-    public String getOutFile() {
-        return outFile;
+    public String getOutputDir() {
+        return outputDir;
     }
 
-    public void setOutFile(String outFile) {
-        this.outFile = outFile;
+    public void setOutputDir(String outputDir) {
+        this.outputDir = outputDir;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public boolean isQcFlag() {

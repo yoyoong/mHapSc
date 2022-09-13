@@ -1,5 +1,6 @@
 package com;
 
+import com.common.Util;
 import com.itextpdf.awt.DefaultFontMapper;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -40,89 +41,43 @@ public class Tanghulu {
     public static final Logger log = LoggerFactory.getLogger(Tanghulu.class);
 
     TanghuluArgs args = new TanghuluArgs();
+    Util util = new Util();
     Region region = new Region();
-    private final Integer SHIFT = 500;
 
     public void tanghulu(TanghuluArgs tanghuluArgs) throws Exception {
         log.info("Tanghulu start!");
         args = tanghuluArgs;
 
-        // 校验命令正确性
+        // check the command
         boolean checkResult = checkArgs();
         if (!checkResult) {
             log.error("Checkargs fail, please check the command.");
             return;
         }
 
-        // 解析region
-        region.setChrom(args.getRegion().split(":")[0]);
-        region.setStart(Integer.valueOf(args.getRegion().split(":")[1].split("-")[0]));
-        region.setEnd(Integer.valueOf(args.getRegion().split(":")[1].split("-")[1]));
+        // parse the region
+        region = util.parseRegion(args.getRegion());
         if (region.getEnd() - region.getStart() > args.getOutcut()) {
             log.error("The region is larger than " + args.getOutcut()
                     + ", it's not recommanded to do tanghulu plotting and system will exit right now...");
             return;
         }
 
-        // 解析bcFile
-        List<String> barcodeList = new ArrayList<>();
-        if (args.getBcFile() != null) {
-            File bcFile = new File(args.getBcFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bcFile));
-            String bcLine = "";
-            while ((bcLine = bufferedReader.readLine()) != null && !bcLine.equals("")) {
-                barcodeList.add(bcLine.split("\t")[0]);
-            }
-        }
+        // parse the barcodefile
+        List<String> barcodeList = util.parseBcFile(args.getBcFile());
 
-        // 解析mhap文件
-        TabixReader mhapTabixReader = new TabixReader(args.getMhapPath());
-        TabixReader.Iterator mhapIterator = mhapTabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
-        Map<String, List<MHapInfo>> mHapInfoListMap = new HashMap<>(); // mhap数据列表（通过barcode索引）
-        String mHapLine = "";
-        while((mHapLine = mhapIterator.next()) != null) {
-            MHapInfo mHapInfo = new MHapInfo();
-            mHapInfo.setChrom(mHapLine.split("\t")[0]);
-            mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
-            mHapInfo.setEnd(Integer.valueOf(mHapLine.split("\t")[2]));
-            mHapInfo.setCpg(mHapLine.split("\t")[3]);
-            mHapInfo.setCnt(Integer.valueOf(mHapLine.split("\t")[4]));
-            mHapInfo.setStrand(mHapLine.split("\t")[5]);
-            mHapInfo.setBarcode(mHapLine.split("\t")[6]);
+        // parse the mhap file
+        Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList,
+                args.getBcFile(), region);
 
-            if (args.getBcFile() != null && !barcodeList.contains(mHapInfo.getBarcode())) {
-                continue;
-            } else {
-                if (mHapInfoListMap.containsKey(mHapInfo.getBarcode())) {
-                    List<MHapInfo> mHapInfoList = mHapInfoListMap.get(mHapInfo.getBarcode());
-                    mHapInfoList.add(mHapInfo);
-                } else {
-                    List<MHapInfo> mHapInfoList = new ArrayList<>();
-                    mHapInfoList.add(mHapInfo);
-                    mHapInfoListMap.put(mHapInfo.getBarcode(), mHapInfoList);
-                }
-            }
-        }
+        // parse the cpg file
+        List<Integer> cpgPosList = util.parseCpgFile(args.getCpgPath(), region);
 
-        // 解析cpg文件
-        List<Integer> cpgPosList = new ArrayList<>();
-        TabixReader cpgTabixReader = new TabixReader(args.getCpgPath());
-        TabixReader.Iterator cpgIterator = cpgTabixReader.query(region.getChrom(), region.getStart() - SHIFT, region.getEnd() + SHIFT);
-        String cpgLine = "";
-        while((cpgLine = cpgIterator.next()) != null) {
-            if (cpgLine.split("\t").length < 3) {
-                continue;
-            } else {
-                cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
-            }
-        }
-
-        boolean tanghuluResult = tanghulu(mHapInfoListMap, cpgPosList, region);
+        boolean tanghuluResult = paintTanghulu(mHapListMap, cpgPosList, region);
         if (!tanghuluResult) {
             log.error("tanghulu fail, please check the command.");
             return;
         }
-
 
         log.info("Tanghulu end!");
     }
@@ -132,36 +87,20 @@ public class Tanghulu {
         return true;
     }
 
-    public boolean tanghulu(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList, Region region) throws Exception {
+    public boolean paintTanghulu(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList, Region region) throws Exception {
         XYSeriesCollection dataset = new XYSeriesCollection();
         List<MHapInfo> mHapInfoListAll = new ArrayList<>();
 
         // get cpg site list in region
-        Integer cpgStartPos = region.getStart() > cpgPosList.get(0) ? region.getStart() : cpgPosList.get(0);
-        Integer cpgEndPos = region.getEnd() > cpgPosList.get(cpgPosList.size() - 1) ? cpgPosList.get(cpgPosList.size() - 1) : region.getEnd();
-        for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) <= cpgStartPos && cpgPosList.get(i + 1) >= cpgStartPos) {
-                cpgStartPos = i + 1;
-                break;
-            }
-        }
-        for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) > cpgEndPos) {
-                cpgEndPos = i;
-                break;
-            } else if (cpgPosList.get(i).equals(cpgEndPos)) {
-                cpgEndPos = i + 1;
-                break;
-            }
-        }
-        Integer cpgStart = cpgPosList.get(cpgStartPos);
-        Integer cpgEnd = cpgPosList.get(cpgEndPos - 1);
+        List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
+        Integer cpgStart = cpgPosList.get(0);
+        Integer cpgEnd = cpgPosList.get(cpgPosListInRegion.size() - 1);
 
         // 创建数据集
-        Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
+        Iterator<String> iterator = mHapListMap.keySet().iterator();
         Integer rowNum = 0;
         while (iterator.hasNext()) {
-            List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
+            List<MHapInfo> mHapInfoList = mHapListMap.get(iterator.next());
 
             // 是否存在正负两条链
             Boolean plusFlag = false;
@@ -356,36 +295,13 @@ public class Tanghulu {
         rangeAxis.setRange(yRange);
         //rangeAxis.setRangeWithMargins(yRange);
 
-        // 输出到文件
-        saveAsFile(jfreechart, args.getOutputFile(), width, height);
+        // output to file
+        String outputFile = args.getTag() + ".tanghulu.pdf";
+        util.saveAsFile(jfreechart, outputFile, width, height);
 
         return true;
     }
 
-    // 保存为文件
-    public void saveAsFile(JFreeChart chart, String outputPath, int width, int height) throws DocumentException, IOException {
-        OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputPath));
-        // 设置文档大小
-        Rectangle pagesize = new Rectangle(width, height);
-        // 创建一个文档
-        Document document = new Document(pagesize, 50, 50, 50, 50);
-        // document.setPageSize(PageSize.A4); // 设置大小
-        // document.setMargins(50, 50, 50, 50); // 设置边距
-        // 创建writer，通过writer将文档写入磁盘
-        PdfWriter pdfWriter = PdfWriter.getInstance(document, outputStream);
-        // 打开文档，只有打开后才能往里面加东西
-        document.open();
-        // 加入统计图
-        PdfContentByte pdfContentByte = pdfWriter.getDirectContent();
-        PdfTemplate pdfTemplate = pdfContentByte.createTemplate(width, height);
-        Graphics2D graphics2D = pdfTemplate.createGraphics(width, height, new DefaultFontMapper());
-        Rectangle2D rectangle2D = new Rectangle2D.Double(0, 0, width, height);
-        chart.draw(graphics2D, rectangle2D);
-        graphics2D.dispose();
-        pdfContentByte.addTemplate(pdfTemplate, 0, 0);
-        // 关闭文档，才能输出
-        document.close();
-        pdfWriter.close();
-    }
+
 
 }

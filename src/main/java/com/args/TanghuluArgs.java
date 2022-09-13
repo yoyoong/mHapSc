@@ -8,7 +8,8 @@ public class TanghuluArgs implements Serializable {
     public String region = "";
     public Integer outcut = 2000;
     public String bcFile;
-    public String outputFile;
+    public String outputDir = ""; // output directory, created in advance
+    public String tag; // prefix of the output files
 
     public String getMhapPath() {
         return mhapPath;
@@ -46,11 +47,19 @@ public class TanghuluArgs implements Serializable {
 
     public void setBcFile(String bcFile) { this.bcFile = bcFile; }
 
-    public String getOutputFile() {
-        return outputFile;
+    public String getOutputDir() {
+        return outputDir;
     }
 
-    public void setOutputFile(String outputFile) {
-        this.outputFile = outputFile;
+    public void setOutputDir(String outputDir) {
+        this.outputDir = outputDir;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 }

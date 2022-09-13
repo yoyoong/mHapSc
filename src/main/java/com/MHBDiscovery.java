@@ -5,6 +5,7 @@ import com.bean.MHBInfo;
 import com.bean.MHapInfo;
 import com.bean.R2Info;
 import com.bean.Region;
+import com.common.Util;
 import htsjdk.tribble.readers.TabixReader;
 import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.slf4j.Logger;
@@ -16,9 +17,9 @@ import java.util.*;
 public class MHBDiscovery {
     public static final Logger log = LoggerFactory.getLogger(MHBDiscovery.class);
 
+    Util util = new Util();
     MHBDiscoveryArgs args = new MHBDiscoveryArgs();
     List<Region> regionList = new ArrayList<>();
-    private final Integer SHIFT = 500;
 
     public void MHBDiscovery(MHBDiscoveryArgs mhbDiscoveryArgs) throws Exception {
         log.info("MHBDiscovery start!");
@@ -66,36 +67,12 @@ public class MHBDiscovery {
             }
         }
 
-        // create mhb file
-        File mhbFile = new File(args.getOutFile());
-        if (!mhbFile.exists()) {
-            if (!mhbFile.createNewFile()){
-                log.error("create" + mhbFile.getAbsolutePath() + "fail");
-                return;
-            }
-        } else {
-            FileWriter fileWriter =new FileWriter(mhbFile.getAbsoluteFile());
-            fileWriter.write("");  //写入空
-            fileWriter.flush();
-            fileWriter.close();
-        }
-        FileWriter mhbFileWriter = new FileWriter(mhbFile.getAbsoluteFile(), true);
-        BufferedWriter mhbBufferedWriter = new BufferedWriter(mhbFileWriter);
+        // create the output directory and file
+        BufferedWriter mhbBufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".bed");
 
         for (Region region : regionList) {
-            // get cpg file
-            List<Integer> cpgPosList = new ArrayList<>();
-            TabixReader cpgTabixReader = new TabixReader(args.getCpgPath());
-            TabixReader.Iterator cpgIterator = cpgTabixReader.query(region.getChrom(),
-                    region.getStart() - SHIFT, region.getEnd() + SHIFT); // 查询范围扩大500
-            String cpgLine = "";
-            while((cpgLine = cpgIterator.next()) != null) {
-                if (cpgLine.split("\t").length < 3) {
-                    continue;
-                } else {
-                    cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
-                }
-            }
+            // parse the cpg file
+            List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 500);
 
             // get cpg site list in region
             Integer cpgStartPos = region.getStart() > cpgPosList.get(0) ? region.getStart() : cpgPosList.get(0);
@@ -130,42 +107,16 @@ public class MHBDiscovery {
                     if (index < 0) {
                         break;
                     }
-                    // get mhap file
-                    TabixReader mhapTabixReader = new TabixReader(args.getmHapPath());
-                    TabixReader.Iterator mhapIterator = mhapTabixReader.query(region.getChrom(),
-                            cpgPosListInRegion.get(index) - 1, cpgPosListInRegion.get(endIndex));
-                    Map<String, List<MHapInfo>> mHapInfoListMap = new HashMap<>(); // mhap数据列表（通过barcode索引）
-                    String mHapLine = "";
-                    while((mHapLine = mhapIterator.next()) != null) {
-                        MHapInfo mHapInfo = new MHapInfo();
-                        mHapInfo.setChrom(mHapLine.split("\t")[0]);
-                        mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
-                        mHapInfo.setEnd(Integer.valueOf(mHapLine.split("\t")[2]));
-                        mHapInfo.setCpg(mHapLine.split("\t")[3]);
-                        mHapInfo.setCnt(Integer.valueOf(mHapLine.split("\t")[4]));
-                        mHapInfo.setStrand(mHapLine.split("\t")[5]);
-                        mHapInfo.setBarcode(mHapLine.split("\t")[6]);
 
-                        if (args.getBcFile() != null && !barcodeList.contains(mHapInfo.getBarcode())) {
-                            continue;
-                        } else {
-                            if (mHapInfoListMap.containsKey(mHapInfo.getBarcode())) {
-                                List<MHapInfo> mHapInfoList = mHapInfoListMap.get(mHapInfo.getBarcode());
-                                mHapInfoList.add(mHapInfo);
-                            } else {
-                                List<MHapInfo> mHapInfoList = new ArrayList<>();
-                                mHapInfoList.add(mHapInfo);
-                                mHapInfoListMap.put(mHapInfo.getBarcode(), mHapInfoList);
-                            }
-                        }
-                    }
+                    // parse the mhap file
+                    Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getmHapPath(), barcodeList, args.getBcFile(), region);
 
                     // get r2 and pvalue of startIndex
-                    R2Info r2Info= getR2(mHapInfoListMap, cpgPosList, cpgPosListInRegion, index, endIndex);
+                    R2Info r2Info= getR2(mHapListMap, cpgPosList, cpgPosListInRegion, index, endIndex);
                     System.out.println("startIndex: " + startIndex + " index: " + index + " endIndex: " + endIndex);
                     System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
                             + r2Info.getR2() + "\t" + r2Info.getPvalue());
-                    if (r2Info == null || r2Info.getR2() < args.getrSquare() || r2Info.getPvalue() > args.getpValue()) {
+                    if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
                         extendFlag = false;
                         break;
                     }
@@ -200,138 +151,15 @@ public class MHBDiscovery {
         return true;
     }
 
-    private R2Info getR2(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion,
+    private R2Info getR2(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion,
                          Integer firstIndex, Integer secondIndex) throws Exception {
-        // 计算行数
-        Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
-        Integer rowNum = 0;
-        while (iterator.hasNext()) {
-            List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
-            // 是否存在正负两条链
-            Boolean plusFlag = false;
-            Boolean minusFlag = false;
-            for (int i = 0; i < mHapInfoList.size(); i++) {
-                plusFlag = mHapInfoList.get(i).getStrand().equals("+") ? true : plusFlag;
-                minusFlag = mHapInfoList.get(i).getStrand().equals("-") ? true : minusFlag;
-            }
-
-            Integer strandCnt = plusFlag && minusFlag ? 2 : 1;// 链数
-            rowNum += strandCnt;
-        }
+        // calculate the row number
+        Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = new Integer[rowNum][cpgPosListInRegion.size()];
-        for (int i = 0; i < cpgPosListInRegion.size(); i++) {
-            Iterator<String> iterator1 = mHapInfoListMap.keySet().iterator();
-            Integer row = 0;
-            while (iterator1.hasNext()) {
-                List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator1.next());
+        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosList, mHapListMap);
 
-                // 是否存在正负两条链
-                Boolean plusFlag = false;
-                Boolean minusFlag = false;
-                for (int j = 0; j < mHapInfoList.size(); j++) {
-                    plusFlag = mHapInfoList.get(j).getStrand().equals("+") ? true : plusFlag;
-                    minusFlag = mHapInfoList.get(j).getStrand().equals("-") ? true : minusFlag;
-                }
-                Integer strandCnt = plusFlag && minusFlag ? 2 : 1;// 链数
-
-                for (int j = 0; j < mHapInfoList.size(); j++) {
-                    MHapInfo mHapInfo = mHapInfoList.get(j);
-                    if (cpgPosListInRegion.get(i) >= mHapInfo.getStart() && cpgPosListInRegion.get(i) <= mHapInfo.getEnd()) {
-                        // 获取某个在区域内的位点在mhap的cpg中的相对位置
-                        Integer pos = cpgPosList.indexOf(cpgPosListInRegion.get(i)) - cpgPosList.indexOf(mHapInfo.getStart());
-
-                        if (plusFlag && minusFlag) {
-                            if (mHapInfo.getStrand().equals("+")) {
-                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                    if (i + k - pos < cpgPosListInRegion.size()) {
-                                        if (mHapInfo.getCpg().charAt(k) == '0') {
-                                            cpgHpMatInRegion[row][i + k - pos] = 0;
-                                        } else {
-                                            cpgHpMatInRegion[row][i + k - pos] = 1;
-                                        }
-                                    }
-                                }
-                            } else {
-                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                    if (i + k - pos < cpgPosListInRegion.size()) {
-                                        if (mHapInfo.getCpg().charAt(k) == '0') {
-                                            cpgHpMatInRegion[row + 1][i + k - pos] = 0;
-                                        } else {
-                                            cpgHpMatInRegion[row + 1][i + k - pos] = 1;
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                if (i + k - pos < cpgPosListInRegion.size()) {
-                                    if (mHapInfo.getCpg().charAt(k) == '0') {
-                                        cpgHpMatInRegion[row][i + k - pos] = 0;
-                                    } else {
-                                        cpgHpMatInRegion[row][i + k - pos] = 1;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                row += strandCnt;
-            }
-        }
-
-        R2Info r2Info = new R2Info();
-
-        Integer N00 = 0;
-        Integer N01 = 0;
-        Integer N10 = 0;
-        Integer N11 = 0;
-
-        for (int k = 0; k < rowNum; k++) {
-            if (cpgHpMatInRegion[k][firstIndex] != null && cpgHpMatInRegion[k][secondIndex] != null) {
-                if (cpgHpMatInRegion[k][firstIndex] == 0 && cpgHpMatInRegion[k][secondIndex] == 0) {
-                    N00++;
-                } else if (cpgHpMatInRegion[k][firstIndex] == 0 && cpgHpMatInRegion[k][secondIndex] == 1) {
-                    N01++;
-                } else if (cpgHpMatInRegion[k][firstIndex] == 1 && cpgHpMatInRegion[k][secondIndex] == 0) {
-                    N10++;
-                } else if (cpgHpMatInRegion[k][firstIndex] == 1 && cpgHpMatInRegion[k][secondIndex] == 1) {
-                    N11++;
-                }
-            }
-        }
-
-        // 计算r2
-        Double r2 = 0.0;
-        Double pvalue = 0.0;
-        Double N = N00 + N01 + N10 + N11 + 0.0;
-        if(N == 0) {
-            r2 = Double.NaN;
-            pvalue = Double.NaN;
-        }
-        Double PA = (N10 + N11) / N;
-        Double PB = (N01 + N11) / N;
-        Double D = N11 / N - PA * PB;
-        Double Num = D * D;
-        Double Den = PA * (1 - PA) * PB * (1 - PB);
-        if (Den == 0.0) {
-            r2 = Double.NaN;
-        } else {
-            r2 = Num / Den;
-        }
-        if (D < 0) {
-            r2 = -1 * r2;
-        }
-
-        // 计算pvalue
-        BinomialDistribution binomialDistribution = new BinomialDistribution(N.intValue(), PA * PB);
-        Double pGreater = 1 - binomialDistribution.cumulativeProbability(N11);
-        Double pEqual = binomialDistribution.probability(N11);
-        pvalue = pGreater + pEqual;
-
-        r2Info.setR2(r2);
-        r2Info.setPvalue(pvalue);
+        R2Info r2Info = util.getR2Info(cpgHpMatInRegion, firstIndex, secondIndex, rowNum);
 
         return r2Info;
     }

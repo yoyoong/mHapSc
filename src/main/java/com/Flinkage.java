@@ -56,18 +56,10 @@ public class Flinkage {
             }
         }
 
-        // 解析bcFile
-        List<String> barcodeList = new ArrayList<>();
-        if (args.getBcFile() != null) {
-            File bcFile = new File(args.getBcFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bcFile));
-            String bcLine = "";
-            while ((bcLine = bufferedReader.readLine()) != null && !bcLine.equals("")) {
-                barcodeList.add(bcLine.split("\t")[0]);
-            }
-        }
+        // parse the barcodefile
+        List<String> barcodeList = util.parseBcFile(args.getBcFile());
 
-        // 创建文件夹
+        // create the output directory
         File outputDir = new File(args.getOutputDir());
         if (!outputDir.exists()){
             if (!outputDir.mkdirs()){
@@ -137,7 +129,6 @@ public class Flinkage {
         cpgPosListInRegion.addAll(cpgPosListInRegion2);
 
         // filter the same barcode of mHapListMap1 and mHapListMap2, and merge the list of same barcode
-
         Iterator<String> iterator = mHapListMap1.keySet().iterator();
         while (iterator.hasNext()) {
             String key = iterator.next();
