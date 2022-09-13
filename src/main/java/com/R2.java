@@ -5,6 +5,7 @@ import com.bean.BedInfo;
 import com.bean.MHapInfo;
 import com.bean.R2Info;
 import com.bean.Region;
+import com.common.Util;
 import com.itextpdf.awt.DefaultFontMapper;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -13,6 +14,7 @@ import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.rewrite.CustomXYBlockRenderer;
 import com.rewrite.CustomXYBlockRenderer2;
+import com.sun.xml.internal.bind.v2.runtime.output.DOMOutput;
 import htsjdk.tribble.readers.TabixReader;
 import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.jfree.chart.JFreeChart;
@@ -45,25 +47,23 @@ import java.util.stream.Collectors;
 public class R2 {
     public static final Logger log = LoggerFactory.getLogger(R2.class);
 
+    Util util = new Util();
     R2Args args = new R2Args();
     Region region = new Region();
-    private final Integer SHIFT = 500;
 
     public void R2(R2Args r2Args) throws Exception {
         log.info("R2 start!");
         args = r2Args;
 
-        // 校验命令正确性
+        // check the command
         boolean checkResult = checkArgs();
         if (!checkResult) {
             log.error("Checkargs fail, please check the command.");
             return;
         }
 
-        // 解析region
-        region.setChrom(args.getRegion().split(":")[0]);
-        region.setStart(Integer.valueOf(args.getRegion().split(":")[1].split("-")[0]));
-        region.setEnd(Integer.valueOf(args.getRegion().split(":")[1].split("-")[1]));
+        // parse the region
+        region = util.parseRegion(args.getRegion());
 
         // 解析bcFile
         List<String> barcodeList = new ArrayList<>();
@@ -76,57 +76,20 @@ public class R2 {
             }
         }
 
-        // 解析mhap文件
-        TabixReader mhapTabixReader = new TabixReader(args.getMhapPath());
-        TabixReader.Iterator mhapIterator = mhapTabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
-        Map<String, List<MHapInfo>> mHapInfoListMap = new HashMap<>(); // mhap数据列表（通过barcode索引）
-        String mHapLine = "";
-        while((mHapLine = mhapIterator.next()) != null) {
-            MHapInfo mHapInfo = new MHapInfo();
-            mHapInfo.setChrom(mHapLine.split("\t")[0]);
-            mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
-            mHapInfo.setEnd(Integer.valueOf(mHapLine.split("\t")[2]));
-            mHapInfo.setCpg(mHapLine.split("\t")[3]);
-            mHapInfo.setCnt(Integer.valueOf(mHapLine.split("\t")[4]));
-            mHapInfo.setStrand(mHapLine.split("\t")[5]);
-            mHapInfo.setBarcode(mHapLine.split("\t")[6]);
+        // parse the mhap file
+        Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
 
-            if (args.getBcFile() != null && !barcodeList.contains(mHapInfo.getBarcode())) {
-                continue;
-            } else {
-                if (mHapInfoListMap.containsKey(mHapInfo.getBarcode())) {
-                    List<MHapInfo> mHapInfoList = mHapInfoListMap.get(mHapInfo.getBarcode());
-                    mHapInfoList.add(mHapInfo);
-                } else {
-                    List<MHapInfo> mHapInfoList = new ArrayList<>();
-                    mHapInfoList.add(mHapInfo);
-                    mHapInfoListMap.put(mHapInfo.getBarcode(), mHapInfoList);
-                }
-            }
-        }
+        // parse the cpg file
+        List<Integer> cpgPosList = util.parseCpgFile(args.getCpgPath(), region);
 
-        // 解析cpg文件
-        List<Integer> cpgPosList = new ArrayList<>();
-        TabixReader cpgTabixReader = new TabixReader(args.getCpgPath());
-        TabixReader.Iterator cpgIterator = cpgTabixReader.query(region.getChrom(),
-                region.getStart() - SHIFT, region.getEnd() + SHIFT); // 查询范围扩大500
-        String cpgLine = "";
-        while((cpgLine = cpgIterator.next()) != null) {
-            if (cpgLine.split("\t").length < 3) {
-                continue;
-            } else {
-                cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
-            }
-        }
-
-        boolean getR2Result = getR2(mHapInfoListMap, cpgPosList);
+        boolean getR2Result = getR2(mHapListMap, cpgPosList);
         if (!getR2Result) {
             log.error("getR2 fail, please check the command.");
             return;
         }
 
         if (args.isMhapView()) {
-            boolean getMhapViewResult = getMhapView(mHapInfoListMap, cpgPosList);
+            boolean getMhapViewResult = getMhapView(mHapListMap, cpgPosList);
             if (!getMhapViewResult) {
                 log.error("getMhapView fail, please check the command.");
                 return;
@@ -141,7 +104,7 @@ public class R2 {
         return true;
     }
 
-    private boolean getR2(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList) throws Exception {
+    private boolean getR2(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList) throws Exception {
         // 创建文件夹
         File outputDir = new File(args.getOutputDir());
         if (!outputDir.exists()){
@@ -192,162 +155,25 @@ public class R2 {
         }
 
         // 提取查询区域内的甲基化位点列表
-        Integer cpgStartPos = region.getStart() > cpgPosList.get(0) ? region.getStart() : cpgPosList.get(0);
-        Integer cpgEndPos = region.getEnd() > cpgPosList.get(cpgPosList.size() - 1) ? cpgPosList.get(cpgPosList.size() - 1) : region.getEnd();
-        for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) <= cpgStartPos && cpgPosList.get(i + 1) >= cpgStartPos) {
-                cpgStartPos = i + 1;
-                break;
-            }
-        }
-        for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) > cpgEndPos) {
-                cpgEndPos = i;
-                break;
-            } else if (cpgPosList.get(i).equals(cpgEndPos)) {
-                cpgEndPos = i + 1;
-                break;
-            }
-        }
-        Integer cpgStart = cpgPosList.get(cpgStartPos);
-        Integer cpgEnd = cpgPosList.get(cpgEndPos - 1);
-        List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos);
+        List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
 
         // 计算行数
-        Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
-        Integer rowNum = 0;
-        while (iterator.hasNext()) {
-            List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
-            // 是否存在正负两条链
-            Boolean plusFlag = false;
-            Boolean minusFlag = false;
-            for (int i = 0; i < mHapInfoList.size(); i++) {
-                plusFlag = mHapInfoList.get(i).getStrand().equals("+") ? true : plusFlag;
-                minusFlag = mHapInfoList.get(i).getStrand().equals("-") ? true : minusFlag;
-            }
-
-            Integer strandCnt = plusFlag && minusFlag ? 2 : 1;// 链数
-            rowNum += strandCnt;
-        }
+        Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = new Integer[rowNum][cpgPosListInRegion.size()];
-        for (int i = 0; i < cpgPosListInRegion.size(); i++) {
-            Iterator<String> iterator1 = mHapInfoListMap.keySet().iterator();
-            Integer row = 0;
-            while (iterator1.hasNext()) {
-                List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator1.next());
-
-                // 是否存在正负两条链
-                Boolean plusFlag = false;
-                Boolean minusFlag = false;
-                for (int j = 0; j < mHapInfoList.size(); j++) {
-                    plusFlag = mHapInfoList.get(j).getStrand().equals("+") ? true : plusFlag;
-                    minusFlag = mHapInfoList.get(j).getStrand().equals("-") ? true : minusFlag;
-                }
-                Integer strandCnt = plusFlag && minusFlag ? 2 : 1;// 链数
-
-                for (int j = 0; j < mHapInfoList.size(); j++) {
-                    MHapInfo mHapInfo = mHapInfoList.get(j);
-                    if (cpgPosListInRegion.get(i) >= mHapInfo.getStart() && cpgPosListInRegion.get(i) <= mHapInfo.getEnd()) {
-                        // 获取某个在区域内的位点在mhap的cpg中的相对位置
-                        Integer pos = cpgPosList.indexOf(cpgPosListInRegion.get(i)) - cpgPosList.indexOf(mHapInfo.getStart());
-
-                        if (plusFlag && minusFlag) {
-                            if (mHapInfo.getStrand().equals("+")) {
-                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                    if (i + k - pos < cpgPosListInRegion.size()) {
-                                        if (mHapInfo.getCpg().charAt(k) == '0') {
-                                            cpgHpMatInRegion[row][i + k - pos] = 0;
-                                        } else {
-                                            cpgHpMatInRegion[row][i + k - pos] = 1;
-                                        }
-                                    }
-                                }
-                            } else {
-                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                    if (i + k - pos < cpgPosListInRegion.size()) {
-                                        if (mHapInfo.getCpg().charAt(k) == '0') {
-                                            cpgHpMatInRegion[row + 1][i + k - pos] = 0;
-                                        } else {
-                                            cpgHpMatInRegion[row + 1][i + k - pos] = 1;
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                if (i + k - pos < cpgPosListInRegion.size()) {
-                                    if (mHapInfo.getCpg().charAt(k) == '0') {
-                                        cpgHpMatInRegion[row][i + k - pos] = 0;
-                                    } else {
-                                        cpgHpMatInRegion[row][i + k - pos] = 1;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                row += strandCnt;
-            }
-        }
+        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
         for (int i = 0; i < cpgPosListInRegion.size(); i++) {
             for (int j = i + 1; j < cpgPosListInRegion.size(); j++) {
-                Integer N00 = 0;
-                Integer N01 = 0;
-                Integer N10 = 0;
-                Integer N11 = 0;
+                R2Info r2Info = util.getR2Info(cpgHpMatInRegion, i, j, rowNum);
 
-                for (int k = 0; k < rowNum; k++) {
-                    if (cpgHpMatInRegion[k][i] != null && cpgHpMatInRegion[k][j] != null) {
-                        if (cpgHpMatInRegion[k][i] == 0 && cpgHpMatInRegion[k][j] == 0) {
-                            N00++;
-                        } else if (cpgHpMatInRegion[k][i] == 0 && cpgHpMatInRegion[k][j] == 1) {
-                            N01++;
-                        } else if (cpgHpMatInRegion[k][i] == 1 && cpgHpMatInRegion[k][j] == 0) {
-                            N10++;
-                        } else if (cpgHpMatInRegion[k][i] == 1 && cpgHpMatInRegion[k][j] == 1) {
-                            N11++;
-                        }
-                    }
-                }
-
-                /// 计算r2
-                Double r2 = 0.0;
-                Double pvalue = 0.0;
-                Double N = N00 + N01 + N10 + N11 + 0.0;
-                if(N == 0) {
-                    r2 = Double.NaN;
-                    pvalue = Double.NaN;
-                }
-                Double PA = (N10 + N11) / N;
-                Double PB = (N01 + N11) / N;
-                Double D = N11 / N - PA * PB;
-                Double Num = D * D;
-                Double Den = PA * (1 - PA) * PB * (1 - PB);
-                if (Den == 0.0) {
-                    r2 = Double.NaN;
-                } else {
-                    r2 = Num / Den;
-                    if (D < 0) {
-                        r2 = -1 * r2;
-                    }
-                }
-
-                // 计算pvalue
-                BinomialDistribution binomialDistribution = new BinomialDistribution(N.intValue(), PA * PB);
-                Double pGreater = 1 - binomialDistribution.cumulativeProbability(N11);
-                Double pEqual = binomialDistribution.probability(N11);
-                pvalue = pGreater + pEqual;
-
-                r2BufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) +
-                        "\t" + cpgPosListInRegion.get(j) + "\t" + N00 + "\t" + N01 + "\t" + N10 + "\t"  + N11 +
-                        "\t" +String.format("%1.8f" , r2) + "\t" + pvalue + "\n");
+                r2BufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" + cpgPosListInRegion.get(j) + "\t"
+                        + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"
+                        + String.format("%1.8f" , r2Info.getR2()) + "\t" + r2Info.getPvalue() + "\n");
                 if (args.isLongrange()) {
                     longrangeBufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t"
                             + (cpgPosListInRegion.get(i) + 1) + "\t" + region.getChrom() + ":" + cpgPosListInRegion.get(j)
-                            + "-" + (cpgPosListInRegion.get(j) + 1) + "," + String.format("%1.8f" , r2) + "\n");
+                            + "-" + (cpgPosListInRegion.get(j) + 1) + "," + String.format("%1.8f" , r2Info.getR2()) + "\n");
                 }
             }
         }
@@ -361,106 +187,16 @@ public class R2 {
         return true;
     }
 
-    private boolean getMhapView(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList) throws Exception {
+    private boolean getMhapView(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList) throws Exception {
 
         // 提取查询区域内的甲基化位点列表
-        Integer cpgStartPos = region.getStart() > cpgPosList.get(0) ? region.getStart() : cpgPosList.get(0);
-        Integer cpgEndPos = region.getEnd() > cpgPosList.get(cpgPosList.size() - 1) ? cpgPosList.get(cpgPosList.size() - 1) : region.getEnd();
-        for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) <= cpgStartPos && cpgPosList.get(i + 1) >= cpgStartPos) {
-                cpgStartPos = i + 1;
-                break;
-            }
-        }
-        for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) > cpgEndPos) {
-                cpgEndPos = i;
-                break;
-            } else if (cpgPosList.get(i).equals(cpgEndPos)) {
-                cpgEndPos = i + 1;
-                break;
-            }
-        }
-        List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos);
+        List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
 
         // 计算行数
-        Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
-        Integer rowNum = 0;
-        while (iterator.hasNext()) {
-            List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
-            // 是否存在正负两条链
-            Boolean plusFlag = false;
-            Boolean minusFlag = false;
-            for (int i = 0; i < mHapInfoList.size(); i++) {
-                plusFlag = mHapInfoList.get(i).getStrand().equals("+") ? true : plusFlag;
-                minusFlag = mHapInfoList.get(i).getStrand().equals("-") ? true : minusFlag;
-            }
-
-            Integer strandCnt = plusFlag && minusFlag ? 2 : 1;// 链数
-            rowNum += strandCnt;
-        }
+        Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = new Integer[rowNum][cpgPosListInRegion.size()];
-        for (int i = 0; i < cpgPosListInRegion.size(); i++) {
-            Iterator<String> iterator1 = mHapInfoListMap.keySet().iterator();
-            Integer row = 0;
-            while (iterator1.hasNext()) {
-                List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator1.next());
-
-                // 是否存在正负两条链
-                Boolean plusFlag = false;
-                Boolean minusFlag = false;
-                for (int j = 0; j < mHapInfoList.size(); j++) {
-                    plusFlag = mHapInfoList.get(j).getStrand().equals("+") ? true : plusFlag;
-                    minusFlag = mHapInfoList.get(j).getStrand().equals("-") ? true : minusFlag;
-                }
-                Integer strandCnt = plusFlag && minusFlag ? 2 : 1;// 链数
-
-                for (int j = 0; j < mHapInfoList.size(); j++) {
-                    MHapInfo mHapInfo = mHapInfoList.get(j);
-                    if (cpgPosListInRegion.get(i) >= mHapInfo.getStart() && cpgPosListInRegion.get(i) <= mHapInfo.getEnd()) {
-                        // 获取某个在区域内的位点在mhap的cpg中的相对位置
-                        Integer pos = cpgPosList.indexOf(cpgPosListInRegion.get(i)) - cpgPosList.indexOf(mHapInfo.getStart());
-
-                        if (plusFlag && minusFlag) {
-                            if (mHapInfo.getStrand().equals("+")) {
-                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                    if (i + k - pos < cpgPosListInRegion.size()) {
-                                        if (mHapInfo.getCpg().charAt(k) == '0') {
-                                            cpgHpMatInRegion[row][i + k - pos] = 0;
-                                        } else {
-                                            cpgHpMatInRegion[row][i + k - pos] = 1;
-                                        }
-                                    }
-                                }
-                            } else {
-                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                    if (i + k - pos < cpgPosListInRegion.size()) {
-                                        if (mHapInfo.getCpg().charAt(k) == '0') {
-                                            cpgHpMatInRegion[row + 1][i + k - pos] = 0;
-                                        } else {
-                                            cpgHpMatInRegion[row + 1][i + k - pos] = 1;
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
-                                if (i + k - pos < cpgPosListInRegion.size()) {
-                                    if (mHapInfo.getCpg().charAt(k) == '0') {
-                                        cpgHpMatInRegion[row][i + k - pos] = 0;
-                                    } else {
-                                        cpgHpMatInRegion[row][i + k - pos] = 1;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                row += strandCnt;
-            }
-        }
+        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
         // 按甲基化比率递减排序
         Arrays.sort(cpgHpMatInRegion, new Comparator<Integer[]>() {
@@ -493,14 +229,11 @@ public class R2 {
                         emptyNumB++;
                     }
                 }
-//                Double cpgRateA = (double) cpgNumA / (cpgNumA + unCpgNumA);
-//                Double cpgRateB = (double) cpgNumB / (cpgNumB + unCpgNumB);
-//                return (int) ((cpgRateB - cpgRateA) * 100);
                 return cpgNumB - cpgNumA;
             }
         });
 
-        CategoryPlot cellCntPlot = createCellCntPlot(mHapInfoListMap, cpgPosListInRegion);
+        CategoryPlot cellCntPlot = createCellCntPlot(mHapListMap, cpgPosListInRegion);
         CategoryPlot mmPlot = createMMPlot(cpgPosListInRegion, cpgHpMatInRegion);
         XYPlot whiteBlackPlot = createWhiteBlackPlot(cpgHpMatInRegion);
         XYPlot bedRegionPlot = createBedRegionPlot(cpgPosListInRegion);
@@ -528,16 +261,14 @@ public class R2 {
         return true;
     }
 
-    private CategoryPlot createCellCntPlot(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosListInRegion) {
+    private CategoryPlot createCellCntPlot(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosListInRegion) {
         // get cell count of every cpg site
         List<Integer> cellCntList = new ArrayList<>();
         for (int i = 0; i < cpgPosListInRegion.size(); i++) {
             Integer cellCnt = 0;
-            Integer aa = 0;
-            Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
+            Iterator<String> iterator = mHapListMap.keySet().iterator();
             while (iterator.hasNext()) {
-                aa++;
-                List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
+                List<MHapInfo> mHapInfoList = mHapListMap.get(iterator.next());
 
                 for (int j = 0; j < mHapInfoList.size(); j++) {
                     MHapInfo mHapInfo = mHapInfoList.get(j);

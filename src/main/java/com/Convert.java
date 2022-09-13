@@ -3,6 +3,7 @@ package com;
 import com.args.ConvertArgs;
 import com.bean.Region;
 import com.bean.ScBedInfo;
+import com.common.Util;
 import htsjdk.tribble.readers.TabixReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ public class Convert {
     public static final Logger log = LoggerFactory.getLogger(Convert.class);
 
     ConvertArgs args = new ConvertArgs();
+    Util util = new Util();
     Region region = new Region();
     private final Integer SHIFT = 500;
 
@@ -60,9 +62,13 @@ public class Convert {
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
         for (Map.Entry<String, List<ScBedInfo>> scBedList : sortedScBedListMap) {
-            System.out.println(scBedList.getKey() + "convert start.");
+            System.out.println(scBedList.getKey() + " convert start.");
             // parse the cpg file
-            List<Integer> cpgPosList = getCpgPosList(scBedList.getValue());
+            Region cpgRegion = new Region();
+            cpgRegion.setChrom(scBedList.getValue().get(0).getChrom());
+            cpgRegion.setStart(scBedList.getValue().get(0).getPos());
+            cpgRegion.setEnd(scBedList.getValue().get(scBedList.getValue().size() - 1).getPos());
+            List<Integer> cpgPosList = util.parseCpgFile(args.getCpgPath(), cpgRegion);
 
             boolean convertResult = convert(scBedList.getValue(), cpgPosList, bufferedWriter);
             if (!convertResult) {
@@ -70,7 +76,7 @@ public class Convert {
                 return;
             }
 
-            System.out.println(scBedList.getKey() + "convert end.");
+            System.out.println(scBedList.getKey() + " convert end.");
         }
         bufferedWriter.close();
 
@@ -111,29 +117,13 @@ public class Convert {
                 List<ScBedInfo> scBedList =new ArrayList<>();
                 scBedList.add(scBedInfo);
                 scBedListMap.put(scBedInfo.getChrom(), scBedList);
-                System.out.println(scBedInfo.getChrom() + "read end");
             }
         }
 
         return scBedListMap;
     }
 
-    private List<Integer> getCpgPosList(List<ScBedInfo> scBedList) throws Exception {
-        List<Integer> cpgPosList = new ArrayList<>();
-        TabixReader cpgTabixReader = new TabixReader(args.getCpgPath());
-        TabixReader.Iterator cpgIterator = cpgTabixReader.query(scBedList.get(0).getChrom(),
-                scBedList.get(0).getPos(), scBedList.get(scBedList.size() - 1).getPos());
-        String cpgLine = "";
-        while((cpgLine = cpgIterator.next()) != null) {
-            if (cpgLine.split("\t").length < 3) {
-                continue;
-            } else {
-                cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
-            }
-        }
 
-        return cpgPosList;
-    }
 
     private boolean convert(List<ScBedInfo> scBedList, List<Integer> cpgPosList, BufferedWriter bufferedWriter) throws Exception {
 

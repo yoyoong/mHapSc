@@ -137,4 +137,32 @@ public class MainTest extends TestCase {
 
         main.main(args);
     }
+
+    @Test
+    public void test_Flinkage() throws Exception {
+        Main main = new Main();
+        String arg0 = "flinkage";
+        String arg1 = "-mhapPath";
+        String arg2 = "CRC_hg19.mhap.gz";
+        String arg3 = "-cpgPath";
+        String arg4 = "hg19_CpG.gz";
+//        String arg5 = "-region1";
+//        String arg6 = "chr1:949817-949850";
+//        String arg7 = "-region2";
+//        String arg8 = "chr1:969429-969458";
+        String arg7 = "-bedFile";
+        String arg8 = "CRC_MHB_non_NC.bed";
+        String arg9 = "-bcFile";
+        String arg10 = "CRC_LN.txt";
+        String arg11 = "-outputDir";
+        String arg12 = "outFlinkage";
+        String arg13 = "-tag";
+        String arg14 = "flinkage";
+        String arg15 = "-limit";
+        String arg16 = "20000000";
+        //String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
+
+        main.main(args);
+    }
 }

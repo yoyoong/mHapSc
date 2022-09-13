@@ -117,7 +117,7 @@ public class Tanghulu {
             }
         }
 
-        boolean tanghuluResult = tanghulu(mHapInfoListMap, cpgPosList);
+        boolean tanghuluResult = tanghulu(mHapInfoListMap, cpgPosList, region);
         if (!tanghuluResult) {
             log.error("tanghulu fail, please check the command.");
             return;
@@ -132,7 +132,7 @@ public class Tanghulu {
         return true;
     }
 
-    private boolean tanghulu(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList) throws Exception {
+    public boolean tanghulu(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList, Region region) throws Exception {
         XYSeriesCollection dataset = new XYSeriesCollection();
         List<MHapInfo> mHapInfoListAll = new ArrayList<>();
 

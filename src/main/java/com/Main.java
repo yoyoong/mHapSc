@@ -10,6 +10,7 @@ public class Main {
     static MHBDiscovery mhbDiscovery = new MHBDiscovery();
     static HemiM hemiM = new HemiM();
     static Track track = new Track();
+    static Flinkage flinkage = new Flinkage();
 
     public static void main(String[] args) throws Exception {
         System.setProperty("java.awt.headless", "true");
@@ -33,6 +34,9 @@ public class Main {
             } else if (args[0].equals("track")) {
                 TrackArgs trackMArgs = parseTrack(args);
                 track.track(trackMArgs);
+            } else if (args[0].equals("flinkage")) {
+                FlinkageArgs flinkageMArgs = parseFlinkage(args);
+                flinkage.flinkage(flinkageMArgs);
             } else {
                 System.out.println("unrecognized command:" + args[0]);
             }
@@ -298,5 +302,55 @@ public class Main {
         }
 
         return trackArgs;
+    }
+
+    private static FlinkageArgs parseFlinkage(String[] args) throws ParseException {
+        Options options = new Options();
+        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("mhapPath").isRequired().hasArg().withDescription("mhapPath").create("mhapPath");
+        Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").isRequired().hasArg().withDescription("cpgPath").create("cpgPath");
+        Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("region1").hasArg().withDescription("region1").create("region1");
+        Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("region2").hasArg().withDescription("region2").create("region2");
+        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("bedFile").hasArg().withDescription("bedFile").create("bedFile");
+        Option option6 = OptionBuilder.withArgName("com/args").withLongOpt("bcFile").hasArg().withDescription("bcFile").create("bcFile");
+        Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").isRequired().hasArg().withDescription("outputDir").create("outputDir");
+        Option option8 = OptionBuilder.withArgName("com/args").withLongOpt("tag").isRequired().hasArg().withDescription("tag").create("tag");
+        Option option9 = OptionBuilder.withArgName("com/args").withLongOpt("limit").hasArg().withDescription("limit").create("limit");
+        options.addOption(option1).addOption(option2).addOption(option3).addOption(option4).addOption(option5).
+                addOption(option6).addOption(option7).addOption(option8).addOption(option9);
+
+        BasicParser parser = new BasicParser();
+        FlinkageArgs flinkageMArgs = new FlinkageArgs();
+
+        CommandLine commandLine = parser.parse(options, args);
+        if (commandLine.getOptions().length > 0) {
+            if (commandLine.hasOption('h')) {
+                HelpFormatter hf = new HelpFormatter();
+                hf.printHelp("Options", options);
+            } else {
+                flinkageMArgs.setMhapPath(commandLine.getOptionValue("mhapPath"));
+                flinkageMArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
+                if (commandLine.hasOption("region1")) {
+                    flinkageMArgs.setRegion1(commandLine.getOptionValue("region1"));
+                }
+                if (commandLine.hasOption("region2")) {
+                    flinkageMArgs.setRegion2(commandLine.getOptionValue("region2"));
+                }
+                if (commandLine.hasOption("bedFile")) {
+                    flinkageMArgs.setBedFile(commandLine.getOptionValue("bedFile"));
+                }
+                if (commandLine.hasOption("bcFile")) {
+                    flinkageMArgs.setBcFile(commandLine.getOptionValue("bcFile"));
+                }
+                flinkageMArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
+                flinkageMArgs.setTag(commandLine.getOptionValue("tag"));
+                if (commandLine.hasOption("limit")) {
+                    flinkageMArgs.setLimit(Integer.valueOf(commandLine.getOptionValue("limit")));
+                }
+            }
+        } else {
+            System.out.println("The paramter is null");
+        }
+
+        return flinkageMArgs;
     }
 }
