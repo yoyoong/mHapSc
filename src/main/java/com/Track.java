@@ -76,7 +76,7 @@ public class Track {
                     Integer strandCnt = util.getMhapMapRowNum(mHapListMap);
 
                     // get cpg ststus matrix in region
-                    Integer[][] cpgHpMatInRegion = util.getCpgHpMat(strandCnt, cpgPosListInRegion.size(), cpgPosList, mHapListMap);
+                    Integer[][] cpgHpMatInRegion = util.getCpgHpMat(strandCnt, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
                     // get the mm of every cpg site
                     for (int i = 0; i < cpgPosListInRegion.size(); i++) {
@@ -89,7 +89,7 @@ public class Track {
                     Integer strandCnt = util.getMhapMapRowNum(mHapListMap);
 
                     // get cpg ststus matrix in region
-                    Integer[][] cpgHpMatInRegion = util.getCpgHpMat(strandCnt, cpgPosListInRegion.size(), cpgPosList, mHapListMap);
+                    Integer[][] cpgHpMatInRegion = util.getCpgHpMat(strandCnt, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
                     // get the mean r2 of every cpg site
                     for (int i = 0; i < cpgPosListInRegion.size(); i++) {

@@ -133,24 +133,21 @@ public class Util {
     }
 
     public List<Integer> getcpgPosListInRegion(List<Integer> cpgPosList, Region region) throws Exception {
-        Integer cpgStartPos = region.getStart() > cpgPosList.get(0) ? region.getStart() : cpgPosList.get(0);
-        Integer cpgEndPos = region.getEnd() > cpgPosList.get(cpgPosList.size() - 1) ? cpgPosList.get(cpgPosList.size() - 1) : region.getEnd();
+        Integer cpgStartPos = 0;
+        Integer cpgEndPos = cpgPosList.size() - 1;
         for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) <= cpgStartPos && cpgPosList.get(i + 1) >= cpgStartPos) {
+            if (cpgPosList.get(i) < region.getStart() && cpgPosList.get(i + 1) >= region.getStart()) {
                 cpgStartPos = i + 1;
                 break;
             }
         }
         for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) > cpgEndPos) {
+            if (cpgPosList.get(i) >= region.getEnd()) {
                 cpgEndPos = i;
-                break;
-            } else if (cpgPosList.get(i).equals(cpgEndPos)) {
-                cpgEndPos = i + 1;
                 break;
             }
         }
-        List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos - 1, cpgEndPos);
+        List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos + 1);
 
         return cpgPosListInRegion;
     }

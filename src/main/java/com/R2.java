@@ -14,9 +14,6 @@ import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.rewrite.CustomXYBlockRenderer;
 import com.rewrite.CustomXYBlockRenderer2;
-import com.sun.xml.internal.bind.v2.runtime.output.DOMOutput;
-import htsjdk.tribble.readers.TabixReader;
-import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.CategoryAxis;
@@ -151,7 +148,7 @@ public class R2 {
         Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosList, mHapListMap);
+        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
         // 按甲基化比率递减排序
         Arrays.sort(cpgHpMatInRegion, new Comparator<Integer[]>() {

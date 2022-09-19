@@ -65,6 +65,12 @@ public class MainTest extends TestCase {
         String arg16 = "CRC_sc_bulk.bed";
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
 
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
         main.main(args);
     }
 
@@ -96,6 +102,7 @@ public class MainTest extends TestCase {
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
 
         main.main(args);
+
     }
 
     @Test

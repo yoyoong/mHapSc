@@ -75,24 +75,21 @@ public class MHBDiscovery {
             List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 500);
 
             // get cpg site list in region
-            Integer cpgStartPos = region.getStart() > cpgPosList.get(0) ? region.getStart() : cpgPosList.get(0);
-            Integer cpgEndPos = region.getEnd() > cpgPosList.get(cpgPosList.size() - 1) ? cpgPosList.get(cpgPosList.size() - 1) : region.getEnd();
+            Integer cpgStartPos = 0;
+            Integer cpgEndPos = cpgPosList.size() - 1;
             for (int i = 0; i < cpgPosList.size(); i++) {
-                if (cpgPosList.get(i) <= cpgStartPos && cpgPosList.get(i + 1) >= cpgStartPos) {
+                if (cpgPosList.get(i) < region.getStart() && cpgPosList.get(i + 1) >= region.getStart()) {
                     cpgStartPos = i + 1;
                     break;
                 }
             }
             for (int i = 0; i < cpgPosList.size(); i++) {
-                if (cpgPosList.get(i) > cpgEndPos) {
+                if (cpgPosList.get(i) >= region.getEnd()) {
                     cpgEndPos = i;
-                    break;
-                } else if (cpgPosList.get(i).equals(cpgEndPos)) {
-                    cpgEndPos = i + 1;
                     break;
                 }
             }
-            List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos - 1, cpgEndPos + 1); /// end site add 1
+            List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos + 2); // end site add 1
 
             List<MHBInfo> mhbInfoList = new ArrayList<>();
             Integer startIndex = 0; // start mhb position index in cpgPosListInRegion
@@ -157,7 +154,7 @@ public class MHBDiscovery {
         Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosList, mHapListMap);
+        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
         R2Info r2Info = util.getR2Info(cpgHpMatInRegion, firstIndex, secondIndex, rowNum);
 
