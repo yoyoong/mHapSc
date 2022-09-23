@@ -116,32 +116,11 @@ public class Tanghulu {
 
             for (int i = 0; i < mHapInfoList.size(); i++) {
                 MHapInfo mHapInfo = mHapInfoList.get(i);
-                String cpg = mHapInfo.getCpg();
+                String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);
 
-                // 截断不在region内的位点
                 Integer start = mHapInfo.getStart();
                 if (mHapInfo.getStart() < cpgStart) { // mhap.start在region.start左边
                     start = cpgStart;
-                    if (mHapInfo.getEnd() < cpgEnd) { // mhap.end在region.end左边
-                        int pos = 0;
-                        for (int j = cpgPosList.indexOf(mHapInfo.getStart()); j < cpgPosList.indexOf(cpgStart); j++) {
-                            pos++;
-                        }
-                        cpg = cpg.substring(pos);
-                    } else { // mhap.end在region.end右边
-                        int pos = cpgPosList.indexOf(mHapInfo.getStart());
-                        int pos1 = cpgPosList.indexOf(cpgStart);
-                        int pos2 = cpgPosList.indexOf(cpgEnd);
-                        cpg = cpg.substring(pos1 - pos, pos2 - pos);
-                    }
-                } else { // mhap.start在region.start右边
-                    if (mHapInfo.getEnd() > cpgEnd) { // mhap.end在region.end右边
-                        int pos = 0;
-                        for (int j = cpgPosList.indexOf(mHapInfo.getStart()); j <= cpgPosList.indexOf(cpgEnd); j++) {
-                            pos++;
-                        }
-                        cpg = cpg.substring(0, pos);
-                    }
                 }
 
                 XYSeries allSeries = new XYSeries(i + mHapInfo.indexByRead() + "_" + cpg +

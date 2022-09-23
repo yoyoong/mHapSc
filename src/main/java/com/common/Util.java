@@ -269,6 +269,37 @@ public class Util {
         return cpgHpMatInRegion;
     }
 
+    public String cutReads(MHapInfo mHapInfo, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion) {
+        String cpg = mHapInfo.getCpg();
+        Integer cpgStart = cpgPosList.get(0);
+        Integer cpgEnd = cpgPosList.get(cpgPosListInRegion.size() - 1);
+
+        if (mHapInfo.getStart() < cpgStart) { // mhap.start在region.start左边
+            if (mHapInfo.getEnd() < cpgEnd) { // mhap.end在region.end左边
+                int pos = 0;
+                for (int j = cpgPosList.indexOf(mHapInfo.getStart()); j < cpgPosList.indexOf(cpgStart); j++) {
+                    pos++;
+                }
+                cpg = cpg.substring(pos);
+            } else { // mhap.end在region.end右边
+                int pos = cpgPosList.indexOf(mHapInfo.getStart());
+                int pos1 = cpgPosList.indexOf(cpgStart);
+                int pos2 = cpgPosList.indexOf(cpgEnd);
+                cpg = cpg.substring(pos1 - pos, pos2 - pos);
+            }
+        } else { // mhap.start在region.start右边
+            if (mHapInfo.getEnd() > cpgEnd) { // mhap.end在region.end右边
+                int pos = 0;
+                for (int j = cpgPosList.indexOf(mHapInfo.getStart()); j <= cpgPosList.indexOf(cpgEnd); j++) {
+                    pos++;
+                }
+                cpg = cpg.substring(0, pos);
+            }
+        }
+
+        return cpg;
+    }
+
     public R2Info getR2Info(Integer[][] cpgHpMat, Integer col1, Integer col2, Integer rowNum) {
         R2Info r2Info = new R2Info();
 
