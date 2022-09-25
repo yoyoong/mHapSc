@@ -87,7 +87,6 @@ public class Flinkage {
 
         for (int i = 0; i < regionList.size(); i++) {
             for (int j = i + 1; j < regionList.size(); j++) {
-                log.info(i + "-" + j);
                 Region region1 = regionList.get(i);
                 Region region2 = regionList.get(j);
 

@@ -18,6 +18,12 @@ public class MainTest extends TestCase {
         String arg6 = "GSM2697488";
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8};
 
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
         main.main(args);
     }
 
@@ -39,6 +45,12 @@ public class MainTest extends TestCase {
         String arg11 = "-bcFile";
         String arg12 = "CRC_LN.txt";
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12};
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
 
         main.main(args);
     }
@@ -101,6 +113,12 @@ public class MainTest extends TestCase {
         String arg19 = "-qc";
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
 
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
         main.main(args);
 
     }
@@ -124,6 +142,12 @@ public class MainTest extends TestCase {
         String arg11 = "-tag";
         String arg12 = "test";
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12};
+
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
 
         main.main(args);
     }
@@ -149,6 +173,12 @@ public class MainTest extends TestCase {
         String arg13 = "-metric";
         String arg14 = "mm r2";
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg8, arg9, arg10, arg11, arg12, arg13, arg14};
+
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
 
         main.main(args);
     }
@@ -177,6 +207,12 @@ public class MainTest extends TestCase {
         String arg16 = "20000000";
         //String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
+
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
 
         main.main(args);
     }

@@ -110,7 +110,7 @@ public class MHBDiscovery {
 
                     // get r2 and pvalue of startIndex
                     R2Info r2Info= getR2(mHapListMap, cpgPosList, cpgPosListInRegion, index, endIndex);
-                    System.out.println("startIndex: " + startIndex + " index: " + index + " endIndex: " + endIndex);
+                    //System.out.println("startIndex: " + startIndex + " index: " + index + " endIndex: " + endIndex);
                     System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
                             + r2Info.getR2() + "\t" + r2Info.getPvalue());
                     if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
