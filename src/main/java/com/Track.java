@@ -5,12 +5,16 @@ import com.bean.MHapInfo;
 import com.bean.R2Info;
 import com.bean.Region;
 import com.common.Util;
-import htsjdk.tribble.readers.TabixReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class Track {
     public static final Logger log = LoggerFactory.getLogger(Track.class);

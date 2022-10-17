@@ -92,8 +92,6 @@ public class MainTest extends TestCase {
         String arg0 = "MHBDiscovery";
         String arg1 = "-mhapPath";
         String arg2 = "CRC_hg19.mhap.gz";
-//        String arg3 = "-bFile";
-//        String arg4 = "";
         String arg3 = "-region";
         String arg4 = "chr1:3229375-3230473";
         String arg5 = "-cpgPath";

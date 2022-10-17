@@ -4,12 +4,13 @@ import com.args.ConvertArgs;
 import com.bean.Region;
 import com.bean.ScBedInfo;
 import com.common.Util;
-import htsjdk.tribble.readers.TabixReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
 import java.util.*;
 
 public class Convert {
@@ -127,10 +128,6 @@ public class Convert {
             if (!cpgPosList.get(startIndex).equals(mapPos)) {
                 continue;
             }
-
-//            if (scBedList.get(i).getPos().equals(248906288)) {
-//                int g = 0;
-//            }
 
             String lastNuc = scBedList.get(i).getNuc();
             Integer expandLength = 0;

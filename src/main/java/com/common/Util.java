@@ -35,8 +35,8 @@ public class Util {
 
     public List<Integer> parseCpgFile(String cpgPath, Region region) throws Exception {
         List<Integer> cpgPosList = new ArrayList<>();
-        TabixReader cpgTabixReader = new TabixReader(cpgPath);
-        TabixReader.Iterator cpgIterator = cpgTabixReader.query(region.getChrom(), region.getStart(), region.getEnd());
+        TabixReader tabixReader = new TabixReader(cpgPath);
+        TabixReader.Iterator cpgIterator = tabixReader.query(region.getChrom(), region.getStart(), region.getEnd());
         String cpgLine = "";
         while((cpgLine = cpgIterator.next()) != null) {
             if (cpgLine.split("\t").length < 3) {
@@ -46,13 +46,14 @@ public class Util {
             }
         }
 
+        tabixReader.close();
         return cpgPosList;
     }
 
     public List<Integer> parseCpgFileWithShift(String cpgPath, Region region, Integer shift) throws Exception {
         List<Integer> cpgPosList = new ArrayList<>();
-        TabixReader cpgTabixReader = new TabixReader(cpgPath);
-        TabixReader.Iterator cpgIterator = cpgTabixReader.query(region.getChrom(), region.getStart() - shift, region.getEnd() + shift);
+        TabixReader tabixReader = new TabixReader(cpgPath);
+        TabixReader.Iterator cpgIterator = tabixReader.query(region.getChrom(), region.getStart() - shift, region.getEnd() + shift);
         String cpgLine = "";
         while((cpgLine = cpgIterator.next()) != null) {
             if (cpgLine.split("\t").length < 3) {
@@ -62,6 +63,7 @@ public class Util {
             }
         }
 
+        tabixReader.close();
         return cpgPosList;
     }
 
@@ -153,8 +155,8 @@ public class Util {
     }
 
     public Map<String, List<MHapInfo>> parseMhapFile(String mhapPath, List<String> barcodeList, String bcFile, Region region) throws IOException {
-        TabixReader mhapTabixReader = new TabixReader(mhapPath);
-        TabixReader.Iterator mhapIterator = mhapTabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
+        TabixReader tabixReader = new TabixReader(mhapPath);
+        TabixReader.Iterator mhapIterator = tabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
         Map<String, List<MHapInfo>> mHapListMap = new HashMap<>(); // mhap数据列表（通过barcode索引）
         String mHapLine = "";
         while((mHapLine = mhapIterator.next()) != null) {
@@ -181,6 +183,7 @@ public class Util {
             }
         }
 
+        tabixReader.close();
         return mHapListMap;
     }
     
