@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.nio.file.Files;
 import java.util.*;
 
 public class Convert {
@@ -35,7 +36,7 @@ public class Convert {
         List<Map.Entry<String, List<ScBedInfo>>> sortedScBedListMap = new ArrayList<Map.Entry<String, List<ScBedInfo>>>(scBedListMap.entrySet());
         Collections.sort(sortedScBedListMap, new Comparator<Map.Entry<String, List<ScBedInfo>>>() { //升序排序
             public int compare(Map.Entry<String, List<ScBedInfo>> o1, Map.Entry<String, List<ScBedInfo>> o2) {
-                if (isNumeric(o1.getValue().get(0).getChrNum()) && isNumeric(o2.getValue().get(0).getChrNum())) {
+                if (util.isNumeric(o1.getValue().get(0).getChrNum()) && util.isNumeric(o2.getValue().get(0).getChrNum())) {
                     return Integer.valueOf(o1.getValue().get(0).getChrNum()).compareTo(Integer.valueOf(o2.getValue().get(0).getChrNum()));
                 } else {
                     return o1.getValue().get(0).getChrNum().compareTo(o2.getValue().get(0).getChrNum());
@@ -47,7 +48,6 @@ public class Convert {
         BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".mhap");
 
         for (Map.Entry<String, List<ScBedInfo>> scBedList : sortedScBedListMap) {
-            System.out.println(scBedList.getKey() + " convert start.");
             // parse the cpg file
             Region cpgRegion = new Region();
             cpgRegion.setChrom(scBedList.getValue().get(0).getChrom());
@@ -61,7 +61,7 @@ public class Convert {
                 return;
             }
 
-            System.out.println(scBedList.getKey() + " convert end.");
+            log.info("Convert " + scBedList.getKey() + " end.");
         }
         bufferedWriter.close();
 
@@ -69,7 +69,12 @@ public class Convert {
     }
 
     private boolean checkArgs() {
-
+        if (args.getBedPath().equals("")) {
+            log.error("The bed file cannot be empty!");
+        }
+        if (args.getCpgPath().equals("")) {
+            log.error("The cpg file cannot be empty!");
+        }
         return true;
     }
 
@@ -78,7 +83,16 @@ public class Convert {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(scBedFile));
         String scBedLine = "";
         Map<String, List<ScBedInfo>> scBedListMap = new HashMap<>();
+        // get the total lines of file
+        long totalLineCnt = Files.lines(scBedFile.toPath()).count();
+        long lineCnt = 0l;
+        long scBedInfoCnt = 0l;
         while ((scBedLine = bufferedReader.readLine()) != null) {
+            lineCnt++;
+            if (lineCnt % (totalLineCnt / 10) == 0) {
+                int percent = (int) Math.round(Double.valueOf(lineCnt) * 100 / totalLineCnt);
+                log.info("Read bed file complete " + percent + "%.");
+            }
             ScBedInfo scBedInfo = new ScBedInfo();
             if (scBedLine.split("\t").length < 8 || !scBedLine.split("\t")[4].equals("CG")) {
                 continue;
@@ -86,6 +100,7 @@ public class Convert {
             if (Float.valueOf(scBedLine.split("\t")[5]) > 0.1 && Float.valueOf(scBedLine.split("\t")[5]) < 0.9) {
                 continue;
             }
+            scBedInfoCnt++;
             scBedInfo.setChrom(scBedLine.split("\t")[0]);
             scBedInfo.setNuc(scBedLine.split("\t")[1]);
             scBedInfo.setPos(Integer.valueOf(scBedLine.split("\t")[2]));
@@ -104,11 +119,10 @@ public class Convert {
                 scBedListMap.put(scBedInfo.getChrom(), scBedList);
             }
         }
+        log.info("Read bed file end! And get " + scBedInfoCnt + " lines can be convert.");
 
         return scBedListMap;
     }
-
-
 
     private boolean convert(List<ScBedInfo> scBedList, List<Integer> cpgPosList, BufferedWriter bufferedWriter) throws Exception {
         String barCode = args.getBedPath().split("\\.")[0];
@@ -132,12 +146,8 @@ public class Convert {
             String lastNuc = scBedList.get(i).getNuc();
             Integer expandLength = 0;
 
-            Integer test1 = cpgPosList.get(startIndex + expandLength);
-            Integer test2 = mapPos;
-            boolean test3 = test1 == test2;
             while (i + expandLength < scBedList.size() && cpgPosList.get(startIndex + expandLength).equals(mapPos)
                     && lastNuc.equals(scBedList.get(i + expandLength).getNuc())) {
-
                 cpg += Math.round(scBedList.get(i + expandLength).getMeth());
                 lastNuc = scBedList.get(i + expandLength).getNuc();
                 expandLength++;
@@ -150,10 +160,7 @@ public class Convert {
                 if (scBedList.get(i + expandLength).getNuc().equals("G")) {
                     mapPos = scBedList.get(i + expandLength).getPos() - 1;
                 }
-
             }
-
-
 
             if (lastNuc.equals("C")) {
 //                System.out.println(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos() + "    " +scBedList.get(i + expandLength - 1).getPos() + "\t" +
@@ -171,15 +178,6 @@ public class Convert {
             startIndex += expandLength - 1;
         }
 
-        return true;
-    }
-
-    public static boolean isNumeric(String str){
-        for (int i = str.length(); --i >= 0; ){
-            if (!Character.isDigit(str.charAt(i))){
-                return false;
-            }
-        }
         return true;
     }
 
