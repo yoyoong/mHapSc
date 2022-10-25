@@ -231,84 +231,89 @@ public class Track {
 
         List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
         Integer start = util.indexOfList(cpgPosList, 0, cpgPosList.size(), cpgPosListInRegion.get(0));
-        Integer cpgPosCnt = 0;
-        for (Integer i = 0; i < cpgPosListInRegion.size(); i++) {
-            cpgPosCnt++;
-            if (cpgPosCnt % 100000 == 0) {
-                log.info("Calculate complete " + cpgPosCnt + " cpg positions.");
-            }
 
-            BedGraphInfo bedGraphInfo = new BedGraphInfo();
-            bedGraphInfo.setChrom(region.getChrom());
-            bedGraphInfo.setStart(cpgPosListInRegion.get(i) - 1);
-            bedGraphInfo.setEnd(cpgPosListInRegion.get(i));
-            if (args.getMetrics().contains("MM")) {
-                Integer nReads = nReadsList[start + i];
-                Integer mRead = mReadList[start + i];
+        String[] metricsList = args.getMetrics().trim().split(" ");
+        for (String metric : metricsList) {
+            Integer cpgPosCnt = 0;
+            for (Integer i = 0; i < cpgPosListInRegion.size(); i++) {
+                cpgPosCnt++;
+                if (cpgPosCnt % 100000 == 0) {
+                    log.info("Calculate complete " + cpgPosCnt + " cpg positions.");
+                }
+
+                BedGraphInfo bedGraphInfo = new BedGraphInfo();
+                bedGraphInfo.setChrom(region.getChrom());
+                bedGraphInfo.setStart(cpgPosListInRegion.get(i) - 1);
+                bedGraphInfo.setEnd(cpgPosListInRegion.get(i));
+                if (metric.equals("MM")) {
+                    Integer nReads = nReadsList[start + i];
+                    Integer mRead = mReadList[start + i];
 //                if (nReads < args.getCpgCov()) {
 //                    continue;
 //                }
 
-                Double MM = mRead.doubleValue() / nReads.doubleValue();
-                if (MM.isNaN() || MM.isInfinite()) {
-                    continue;
-                }
-                bedGraphInfo.setMM(MM.floatValue());
-                bufferedWriterMM.write(bedGraphInfo.printMM());
-            }
-
-            if (args.getMetrics().contains("R2")) {
-                Double r2Sum = 0.0;
-                Double r2Num = 0.0;
-                for (int j = i - 2; j < i + 3; j++) {
-                    if (j < 0 || j == i || j >= cpgPosListInRegion.size()) {
+                    Double MM = mRead.doubleValue() / nReads.doubleValue();
+                    if (MM.isNaN() || MM.isInfinite()) {
                         continue;
                     }
-                    Integer index = j - i > 0 ? j - i + 1 : j - i + 2;
-                    Integer N00 = N00List[index][start + i];
-                    Integer N01 = N01List[index][start + i];
-                    Integer N10 = N10List[index][start + i];
-                    Integer N11 = N11List[index][start + i];
+                    bedGraphInfo.setMM(MM.floatValue());
+                    bufferedWriterMM.write(bedGraphInfo.printMM());
+                }
+
+                if (metric.equals("R2")) {
+                    Double r2Sum = 0.0;
+                    Double r2Num = 0.0;
+                    for (int j = i - 2; j < i + 3; j++) {
+                        if (j < 0 || j == i || j >= cpgPosListInRegion.size()) {
+                            continue;
+                        }
+                        Integer index = j - i > 0 ? j - i + 1 : j - i + 2;
+                        Integer N00 = N00List[index][start + i];
+                        Integer N01 = N01List[index][start + i];
+                        Integer N10 = N10List[index][start + i];
+                        Integer N11 = N11List[index][start + i];
 //                    if ((N00 + N01 + N10 + N11) < args.getR2Cov()) {
 //                        continue;
 //                    }
 
-                    // 计算r2
-                    Double r2 = 0.0;
-                    Double pvalue = 0.0;
-                    Double N = N00 + N01 + N10 + N11 + 0.0;
-                    if(N == 0) {
-                        r2 = Double.NaN;
-                        pvalue = Double.NaN;
-                    }
-                    Double PA = (N10 + N11) / N;
-                    Double PB = (N01 + N11) / N;
-                    Double D = N11 / N - PA * PB;
-                    Double Num = D * D;
-                    Double Den = PA * (1 - PA) * PB * (1 - PB);
-                    if (Den == 0.0) {
-                        r2 = Double.NaN;
-                    } else {
-                        r2 = Num / Den;
-                        if (D < 0) {
-                            r2 = -1 * r2;
+                        // 计算r2
+                        Double r2 = 0.0;
+                        Double pvalue = 0.0;
+                        Double N = N00 + N01 + N10 + N11 + 0.0;
+                        if(N == 0) {
+                            r2 = Double.NaN;
+                            pvalue = Double.NaN;
+                        }
+                        Double PA = (N10 + N11) / N;
+                        Double PB = (N01 + N11) / N;
+                        Double D = N11 / N - PA * PB;
+                        Double Num = D * D;
+                        Double Den = PA * (1 - PA) * PB * (1 - PB);
+                        if (Den == 0.0) {
+                            r2 = Double.NaN;
+                        } else {
+                            r2 = Num / Den;
+                            if (D < 0) {
+                                r2 = -1 * r2;
+                            }
+                        }
+
+                        if (!r2.isNaN()) {
+                            r2Num++;
+                            r2Sum += r2;
                         }
                     }
 
-                    if (!r2.isNaN()) {
-                        r2Num++;
-                        r2Sum += r2;
+                    Double meanR2 = r2Sum / r2Num;
+                    if (meanR2.isNaN() || meanR2.isInfinite()) {
+                        continue;
                     }
+                    bedGraphInfo.setR2(meanR2.floatValue());
+                    bufferedWriterR2.write(bedGraphInfo.printR2());
                 }
-
-                Double meanR2 = r2Sum / r2Num;
-                if (meanR2.isNaN() || meanR2.isInfinite()) {
-                    continue;
-                }
-                bedGraphInfo.setR2(meanR2.floatValue());
-                bufferedWriterR2.write(bedGraphInfo.printR2());
             }
         }
+
         return true;
     }
 
