@@ -69,7 +69,7 @@ public class R2 {
         Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
 
         // parse the cpg file
-        List<Integer> cpgPosList = util.parseCpgFile(args.getCpgPath(), region);
+        List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
 
         boolean getR2Result = getR2(mHapListMap, cpgPosList);
         if (!getR2Result) {
@@ -89,6 +89,22 @@ public class R2 {
     }
 
     private boolean checkArgs() {
+        if (args.getMhapPath().equals("")) {
+            log.error("mhapPath can not be null.");
+            return false;
+        }
+        if (args.getCpgPath().equals("")) {
+            log.error("cpgPath can not be null.");
+            return false;
+        }
+        if (args.getRegion().equals("")) {
+            log.error("region can not be null.");
+            return false;
+        }
+        if (!args.getStrand().equals("plus") && !args.getStrand().equals("minus") && !args.getStrand().equals("both")) {
+            log.error("The strand must be one of plus, minus or both");
+            return false;
+        }
 
         return true;
     }
@@ -103,7 +119,7 @@ public class R2 {
                 + "N10" + "\t" + "N11" + "\t" + "r2" + "\t" + "pvalue" + "\n";
         r2BufferedWriter.write(head);
 
-        BufferedWriter longrangeBufferedWriter = new BufferedWriter(new FileWriter(r2FileName));
+        BufferedWriter longrangeBufferedWriter = null;
         if (args.isLongrange()) {
             String longrangeFileName = args.getTag() + "_" + region.toFileString() + ".longrange.txt";
             longrangeBufferedWriter = util.createOutputFile(args.getOutputDir(), longrangeFileName);
@@ -121,7 +137,6 @@ public class R2 {
         for (int i = 0; i < cpgPosListInRegion.size(); i++) {
             for (int j = i + 1; j < cpgPosListInRegion.size(); j++) {
                 R2Info r2Info = util.getR2Info(cpgHpMatInRegion, i, j, rowNum);
-
                 r2BufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" + cpgPosListInRegion.get(j) + "\t"
                         + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"
                         + String.format("%1.8f" , r2Info.getR2()) + "\t" + r2Info.getPvalue() + "\n");
@@ -395,7 +410,7 @@ public class R2 {
     private XYPlot createBedRegionPlot(List<Integer> cpgPosListInRegion) throws Exception {
 
         // parse the bed file
-        Map<String, List<BedInfo>> bedInfoListMap = util.parseBedFile(args.getBedFile());
+        Map<String, List<BedInfo>> bedInfoListMap = util.parseBedFileToMap(args.getBedFile());
 
         // 创建数据集
         DefaultXYZDataset dataset = new DefaultXYZDataset();

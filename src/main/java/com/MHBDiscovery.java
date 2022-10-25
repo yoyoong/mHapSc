@@ -43,20 +43,7 @@ public class MHBDiscovery {
             region.setEnd(Integer.valueOf(args.getRegion().split(":")[1].split("-")[1]));
             regionList.add(region);
         } else {
-            File bedFile = new File(args.getBedFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bedFile));
-            String bedLine = "";
-            while ((bedLine = bufferedReader.readLine()) != null && !bedLine.equals("")) {
-                Region region = new Region();
-                if (bedLine.split("\t").length < 3) {
-                    log.error("Interval not in correct format.");
-                    break;
-                }
-                region.setChrom(bedLine.split("\t")[0]);
-                region.setStart(Integer.valueOf(bedLine.split("\t")[1]) + 1);
-                region.setEnd(Integer.valueOf(bedLine.split("\t")[2]));
-                regionList.add(region);
-            }
+            regionList = util.parseBedFile(args.getBedFile());
         }
 
         // get bcFile
@@ -75,7 +62,7 @@ public class MHBDiscovery {
 
         for (Region region : regionList) {
             // parse the cpg file
-            List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 500);
+            List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
 
             // get cpg site list in region
             Integer cpgStartPos = 0;
@@ -113,9 +100,8 @@ public class MHBDiscovery {
 
                     // get r2 and pvalue of startIndex
                     R2Info r2Info= getR2(mHapListMap, cpgPosList, cpgPosListInRegion, index, endIndex);
-                    //System.out.println("startIndex: " + startIndex + " index: " + index + " endIndex: " + endIndex);
-                    System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
-                            + r2Info.getR2() + "\t" + r2Info.getPvalue());
+//                    System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
+//                            + r2Info.getR2() + "\t" + r2Info.getPvalue());
                     if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
                         extendFlag = false;
                         break;

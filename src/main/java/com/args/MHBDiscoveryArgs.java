@@ -4,15 +4,15 @@ import java.io.Serializable;
 
 public class MHBDiscoveryArgs implements Serializable {
     public String mHapPath = ""; // Indexed haplotype file
-    public String bcFile; // Barcode ID file
+    public String bcFile = ""; // Barcode ID file
     public String cpgPath = ""; // CpG position file
-    public String region; // One interval [chr1:1000-2000]
-    public String bedFile; // BED file
+    public String region = ""; // One interval [chr1:1000-2000]
+    public String bedFile = ""; // BED file
     public Integer window = 5; // Size of core window
     public Double r2 = 0.5; // R square cutoff
     public Double pvalue = 0.05; // P value cutoff
     public String outputDir = ""; // output directory, created in advance
-    public String tag; // prefix of the output files
+    public String tag = "MHBDiscovery.out"; // prefix of the output files
     public boolean qcFlag = false; // whether output matrics for QC
 
     public String getmHapPath() {

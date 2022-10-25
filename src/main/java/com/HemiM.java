@@ -38,20 +38,7 @@ public class HemiM {
             Region region = util.parseRegion(args.getRegion());
             regionList.add(region);
         } else {
-            File bedFile = new File(args.getBedFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bedFile));
-            String bedLine = "";
-            while ((bedLine = bufferedReader.readLine()) != null && !bedLine.equals("")) {
-                Region region = new Region();
-                if (bedLine.split("\t").length < 3) {
-                    log.error("Interval not in correct format.");
-                    break;
-                }
-                region.setChrom(bedLine.split("\t")[0]);
-                region.setStart(Integer.valueOf(bedLine.split("\t")[1]) + 1);
-                region.setEnd(Integer.valueOf(bedLine.split("\t")[2]));
-                regionList.add(region);
-            }
+            regionList = util.parseBedFile(args.getBedFile());
         }
 
         // parse the barcodefile
@@ -99,7 +86,9 @@ public class HemiM {
                         MHapInfo mHapInfo = mHapInfoList.get(i);
                         String cpg = mHapInfo.getCpg();
 
-                        Integer pos = cpgPosList.indexOf(cpgPosListInRegion.get(0)) - cpgPosList.indexOf(mHapInfo.getStart());
+                        Integer pos = util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPosListInRegion.get(0)) -
+                                util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
+
                         if (mHapInfo.getStrand().equals("+")) {
                             for (int j = 0; j < cpg.length(); j++) {
                                 if (0 <= (j - pos) && (j - pos) < cpgPosListInRegion.size()) {

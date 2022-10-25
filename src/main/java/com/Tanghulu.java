@@ -65,7 +65,7 @@ public class Tanghulu {
                 args.getBcFile(), region);
 
         // parse the cpg file
-        List<Integer> cpgPosList = util.parseCpgFile(args.getCpgPath(), region);
+        List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
 
         boolean tanghuluResult = paintTanghulu(mHapListMap, cpgPosList, region);
         if (!tanghuluResult) {
@@ -77,6 +77,22 @@ public class Tanghulu {
     }
 
     private boolean checkArgs() {
+        if (args.getMhapPath().equals("")) {
+            log.error("mhapPath can not be null.");
+            return false;
+        }
+        if (args.getCpgPath().equals("")) {
+            log.error("cpgPath can not be null.");
+            return false;
+        }
+        if (args.getRegion().equals("")) {
+            log.error("region can not be null.");
+            return false;
+        }
+        if (args.getOutcut() > 2000) {
+            log.error("The region is larger than 2000, it's not recommand to do tanghulu plotting, please re-enter the outcut.");
+            return false;
+        }
 
         return true;
     }
@@ -274,7 +290,4 @@ public class Tanghulu {
 
         return true;
     }
-
-
-
 }

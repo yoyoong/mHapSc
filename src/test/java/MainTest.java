@@ -129,7 +129,7 @@ public class MainTest extends TestCase {
         String arg2 = "CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
         String arg4 = "hg19_CpG.gz";
-        String arg5 = "-bFile";
+        String arg5 = "-bedFile";
         String arg6 = "CRC_MHB_non_NC.bed";
 //        String arg5 = "-region";
 //        String arg6 = "chr1:3229375-3230473";
@@ -158,19 +158,20 @@ public class MainTest extends TestCase {
         String arg2 = "CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
         String arg4 = "hg19_CpG.gz";
-        String arg5 = "-region";
-        String arg6 = "chr1:3229375-3230473";
-//        String arg5 = "-bFile";
-//        String arg6 = "CRC_MHB_non_NC.bed";
+//        String arg5 = "-region";
+//        String arg6 = "chr1:3229375-3230473";
+        String arg5 = "-bedFile";
+        String arg6 = "CRC_MHB_non_NC.bed";
         String arg7 = "-outputDir";
         String arg8 = "outputDir";
         String arg9 = "-tag";
         String arg10 = "test";
         String arg11 = "-bcFile";
         String arg12 = "CRC_LN.txt";
-        String arg13 = "-metric";
-        String arg14 = "mm r2";
-        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg8, arg9, arg10, arg11, arg12, arg13, arg14};
+        String arg13 = "-metrics";
+        String arg14 = "MM R2";
+        //String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg8, arg9, arg10, arg11, arg12, arg13, arg14};
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg7, arg8, arg9, arg10, arg8, arg9, arg10, arg11, arg12, arg13, arg14};
 
         String argsStr = "";
         for (int i = 0; i < args.length; i++) {

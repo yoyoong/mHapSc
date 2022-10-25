@@ -7,9 +7,9 @@ public class TanghuluArgs implements Serializable {
     public String cpgPath = "";
     public String region = "";
     public Integer outcut = 2000;
-    public String bcFile;
+    public String bcFile = "";
     public String outputDir = ""; // output directory, created in advance
-    public String tag; // prefix of the output files
+    public String tag = "tanghulu.out"; // prefix of the output files
 
     public String getMhapPath() {
         return mhapPath;

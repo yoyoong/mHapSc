@@ -67,6 +67,35 @@ public class Util {
         return cpgPosList;
     }
 
+    public Map<String, List<Integer>> parseWholeCpgFile(String cpgPath) throws Exception {
+        Map<String, List<Integer>> cpgPosListMap = new HashMap<>();
+
+        List<Integer> cpgPosList = new ArrayList<>();
+        TabixReader tabixReader = new TabixReader(cpgPath);
+        String cpgLine = tabixReader.readLine();
+        String lastChr = cpgLine.split("\t")[0];
+        while(cpgLine != null && !cpgLine.equals("")) {
+            if (cpgLine.split("\t").length < 3) {
+                continue;
+            } else {
+                if (lastChr.equals(cpgLine.split("\t")[0])) {
+                    cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
+                } else {
+                    cpgPosListMap.put(lastChr, cpgPosList);
+                    lastChr = cpgLine.split("\t")[0];
+                    cpgPosList = new ArrayList<>();
+                    cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
+                }
+                cpgLine = tabixReader.readLine();
+            }
+        }
+        cpgPosListMap.put(lastChr, cpgPosList);
+        log.info("Read cpg file success.");
+
+        tabixReader.close();
+        return cpgPosListMap;
+    }
+
     public List<String> parseBcFile(String bcFileName) throws Exception {
         List<String> barcodeList = new ArrayList<>();
         if (bcFileName != null && !bcFileName.equals("")) {
@@ -80,7 +109,25 @@ public class Util {
         return barcodeList;
     }
 
-    public Map<String, List<BedInfo>> parseBedFile(String bedFile) throws Exception {
+    public List<Region> parseBedFile(String bedFile) throws Exception {
+        List<Region> regionList = new ArrayList<>();
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(bedFile)));
+        String bedLine = "";
+        while ((bedLine = bufferedReader.readLine()) != null && !bedLine.equals("")) {
+            Region region = new Region();
+            if (bedLine.split("\t").length < 3) {
+                log.error("Interval not in correct format.");
+                break;
+            }
+            region.setChrom(bedLine.split("\t")[0]);
+            region.setStart(Integer.valueOf(bedLine.split("\t")[1]) + 1);
+            region.setEnd(Integer.valueOf(bedLine.split("\t")[2]));
+            regionList.add(region);
+        }
+        return regionList;
+    }
+
+    public Map<String, List<BedInfo>> parseBedFileToMap(String bedFile) throws Exception {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(bedFile)));
         String bedLine = "";
         Map<String, List<BedInfo>> bedInfoListMap = new HashMap<>();
@@ -105,7 +152,7 @@ public class Util {
         return bedInfoListMap;
     }
 
-        public BufferedWriter createOutputFile(String directory, String fileName) throws IOException {
+    public BufferedWriter createOutputFile(String directory, String fileName) throws IOException {
         // create the output directory
         File outputDir = new File(directory);
         if (!outputDir.exists()){
@@ -143,16 +190,49 @@ public class Util {
                 break;
             }
         }
-        for (int i = 0; i < cpgPosList.size(); i++) {
-            if (cpgPosList.get(i) >= region.getEnd()) {
+        for (int i = cpgStartPos; i < cpgPosList.size(); i++) {
+            if (cpgPosList.get(i) > region.getEnd()) {
                 cpgEndPos = i;
+                break;
+            } else if (cpgPosList.get(i) == region.getEnd()) {
+                cpgEndPos = i + 1;
                 break;
             }
         }
-        List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos + 1);
+        List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos);
 
         return cpgPosListInRegion;
     }
+
+//    public List<MHapInfo> parseMhapFileToList(String mhapPath, List<String> barcodeList, String bcFile, Region region) throws Exception {
+//        TabixReader tabixReader = new TabixReader(mhapPath);
+//        TabixReader.Iterator mhapIterator = tabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
+//        List<MHapInfo> mHapInfoList = new ArrayList<>();
+//        String mHapLine = "";
+//        Integer lineCnt = 0;
+//        while((mHapLine = mhapIterator.next()) != null) {
+//            lineCnt++;
+//            if (lineCnt % 1000000 == 0) {
+//                log.info("Read " + region.getChrom() + " mhap " + lineCnt + " lines.");
+//            }
+//            MHapInfo mHapInfo = new MHapInfo();
+//            mHapInfo.setChrom(mHapLine.split("\t")[0]);
+//            mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
+//            mHapInfo.setEnd(Integer.valueOf(mHapLine.split("\t")[2]));
+//            mHapInfo.setCpg(mHapLine.split("\t")[3]);
+//            mHapInfo.setCnt(Integer.valueOf(mHapLine.split("\t")[4]));
+//            mHapInfo.setStrand(mHapLine.split("\t")[5]);
+//            mHapInfo.setBarcode(mHapLine.split("\t")[6]);
+//            if (bcFile != null && !barcodeList.contains(mHapInfo.getBarcode())) {
+//                continue;
+//            } else {
+//                mHapInfoList.add(mHapInfo);
+//            }
+//        }
+//
+//        tabixReader.close();
+//        return mHapInfoList;
+//    }
 
     public Map<String, List<MHapInfo>> parseMhapFile(String mhapPath, List<String> barcodeList, String bcFile, Region region) throws IOException {
         TabixReader tabixReader = new TabixReader(mhapPath);
@@ -228,7 +308,8 @@ public class Util {
                     MHapInfo mHapInfo = mHapInfoList.get(j);
                     if (cpgPosList.get(i) >= mHapInfo.getStart() && cpgPosList.get(i) <= mHapInfo.getEnd()) {
                         // 获取某个在区域内的位点在mhap的cpg中的相对位置
-                        Integer pos = cpgPosList.indexOf(cpgPosList.get(i)) - cpgPosList.indexOf(mHapInfo.getStart());
+                        Integer pos = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPosList.get(i)) -
+                                indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
 
                         if (plusFlag && minusFlag) {
                             if (mHapInfo.getStrand().equals("+")) {
@@ -274,34 +355,30 @@ public class Util {
 
     public String cutReads(MHapInfo mHapInfo, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion) {
         String cpg = mHapInfo.getCpg();
-        Integer cpgStart = cpgPosList.get(0);
-        Integer cpgEnd = cpgPosList.get(cpgPosListInRegion.size() - 1);
+        Integer cpgStart = cpgPosListInRegion.get(0);
+        Integer cpgEnd = cpgPosListInRegion.get(cpgPosListInRegion.size() - 1);
+        int cpgStartPos = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgStart);
+        int cpgEndPos = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgEnd);
 
-        if (mHapInfo.getStart() < cpgStart) { // mhap.start在region.start左边
-            if (mHapInfo.getEnd() < cpgEnd) { // mhap.end在region.end左边
-                int pos = 0;
-                for (int j = cpgPosList.indexOf(mHapInfo.getStart()); j < cpgPosList.indexOf(cpgStart); j++) {
-                    pos++;
-                }
-                cpg = cpg.substring(pos);
-            } else { // mhap.end在region.end右边
-                int pos = cpgPosList.indexOf(mHapInfo.getStart());
-                int pos1 = cpgPosList.indexOf(cpgStart);
-                int pos2 = cpgPosList.indexOf(cpgEnd);
-                cpg = cpg.substring(pos1 - pos, pos2 - pos);
+        if (mHapInfo.getStart() <= cpgStart) {
+            int startPos = cpgStartPos - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
+            if (mHapInfo.getEnd() <= cpgEnd) {
+                cpg = cpg.substring(startPos);
+            } else {
+                int endPos = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getEnd()) - cpgEndPos;
+                cpg = cpg.substring(startPos, endPos + 1);
             }
-        } else { // mhap.start在region.start右边
-            if (mHapInfo.getEnd() > cpgEnd) { // mhap.end在region.end右边
-                int pos = 0;
-                for (int j = cpgPosList.indexOf(mHapInfo.getStart()); j <= cpgPosList.indexOf(cpgEnd); j++) {
-                    pos++;
-                }
-                cpg = cpg.substring(0, pos);
+        } else {
+            if (mHapInfo.getEnd() > cpgEnd) {
+                int endPos = cpgEndPos - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
+                cpg = cpg.substring(0, endPos + 1);
             }
         }
 
         return cpg;
     }
+
+
 
     public R2Info getR2Info(Integer[][] cpgHpMat, Integer col1, Integer col2, Integer rowNum) {
         R2Info r2Info = new R2Info();
@@ -396,5 +473,23 @@ public class Util {
             }
         }
         return true;
+    }
+
+    public Integer indexOfList(List<Integer> list, Integer start, Integer end, Integer findValue) {
+        if(start <= end){
+            Integer middle = (start + end) / 2;
+            Integer middleValue = list.get(middle);//中间值
+            if (findValue.equals(middleValue)) {
+                //查找值等于中间值直接返回
+                return  middle;
+            } else if (findValue < middleValue) {
+                //小于中间值，在中间值之前的数据中查找
+                return indexOfList(list, start, middle - 1, findValue);
+            } else {
+                //大于中间值，在中间值之后的数据中查找
+                return indexOfList(list, middle + 1, end, findValue);
+            }
+        }
+        return -1;
     }
 }

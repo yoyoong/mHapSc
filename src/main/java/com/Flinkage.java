@@ -40,20 +40,7 @@ public class Flinkage {
             Region region2 = util.parseRegion(args.getRegion2());    
             regionList.add(region2);
         } else {
-            File bedFile = new File(args.getBedFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bedFile));
-            String bedLine = "";
-            while ((bedLine = bufferedReader.readLine()) != null && !bedLine.equals("")) {
-                Region region = new Region();
-                if (bedLine.split("\t").length < 3) {
-                    log.error("Interval not in correct format.");
-                    break;
-                }
-                region.setChrom(bedLine.split("\t")[0]);
-                region.setStart(Integer.valueOf(bedLine.split("\t")[1]) + 1);
-                region.setEnd(Integer.valueOf(bedLine.split("\t")[2]));
-                regionList.add(region);
-            }
+            regionList = util.parseBedFile(args.getBedFile());
         }
 
         // parse the barcodefile
@@ -69,21 +56,7 @@ public class Flinkage {
         }
 
         // create the output file
-        String fileName = args.getOutputDir() + "/" + args.getTag() + ".longrange.txt";
-        File file = new File(fileName);
-        if (!file.exists()) {
-            if (!file.createNewFile()) {
-                log.error("create" + file.getAbsolutePath() + "fail");
-                return;
-            }
-        } else {
-            FileWriter fileWriter =new FileWriter(file.getAbsoluteFile());
-            fileWriter.write("");  //写入空
-            fileWriter.flush();
-            fileWriter.close();
-        }
-        FileWriter fileWriter = new FileWriter(file.getAbsoluteFile(), true);
-        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".longrange.txt");
 
         for (int i = 0; i < regionList.size(); i++) {
             for (int j = i + 1; j < regionList.size(); j++) {
@@ -147,15 +120,6 @@ public class Flinkage {
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
         Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap1);
-//        for (int i = 0; i < cpgHpMatInRegion.length; i++) {
-//            for (int j = 0; j < cpgHpMatInRegion[i].length; j++) {
-//                if (cpgHpMatInRegion[i][j] == null) {
-//                    cpgHpMatInRegion[i][j] = -1;
-//                }
-//                System.out.print(cpgHpMatInRegion[i][j] + " ");
-//            }
-//            System.out.print("\n");
-//        }
 
         // calculate the r2Info of erery position
         Integer totalR2Num = cpgPosListInRegion1.size() * cpgPosListInRegion2.size();
