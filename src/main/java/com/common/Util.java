@@ -16,6 +16,7 @@ import org.jfree.chart.JFreeChart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
@@ -237,9 +238,15 @@ public class Util {
     public Map<String, List<MHapInfo>> parseMhapFile(String mhapPath, List<String> barcodeList, String bcFile, Region region) throws IOException {
         TabixReader tabixReader = new TabixReader(mhapPath);
         TabixReader.Iterator mhapIterator = tabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
-        Map<String, List<MHapInfo>> mHapListMap = new HashMap<>(); // mhap数据列表（通过barcode索引）
+        TreeMap<String, List<MHapInfo>> mHapListMap = new TreeMap<>(); // mhap数据列表（通过barcode索引）
         String mHapLine = "";
+        Integer lineCnt = 0;
         while((mHapLine = mhapIterator.next()) != null) {
+            lineCnt++;
+            if (lineCnt % 1000000 == 0) {
+                log.info("Read " + region.getChrom() + " mhap " + lineCnt + " lines.");
+            }
+
             MHapInfo mHapInfo = new MHapInfo();
             mHapInfo.setChrom(mHapLine.split("\t")[0]);
             mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
@@ -353,6 +360,38 @@ public class Util {
         return cpgHpMatInRegion;
     }
 
+    public Integer[][] getCpgMatrix(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList) {
+        Integer[][] getCpgMatrix = new Integer[mHapListMap.size()][cpgPosList.size()];
+
+        for (int i = 0; i < cpgPosList.size(); i++) {
+            Integer row = 0;
+            Iterator<String> iterator = mHapListMap.keySet().iterator();
+            while (iterator.hasNext()) {
+                List<MHapInfo> mHapInfoList = mHapListMap.get(iterator.next());
+                for (int j = 0; j < mHapInfoList.size(); j++) {
+                    MHapInfo mHapInfo = mHapInfoList.get(j);
+                    if (cpgPosList.get(i) >= mHapInfo.getStart() && cpgPosList.get(i) <= mHapInfo.getEnd()) {
+                        // 获取某个在区域内的位点在mhap的cpg中的相对位置
+                        Integer pos = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPosList.get(i)) -
+                                indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
+                        for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
+                            if (i + k - pos < cpgPosList.size()) {
+                                if (mHapInfo.getCpg().charAt(k) == '0') {
+                                    getCpgMatrix[row][i + k - pos] = 0;
+                                } else {
+                                    getCpgMatrix[row][i + k - pos] = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                row++;
+            }
+        }
+
+        return getCpgMatrix;
+    }
+
     public String cutReads(MHapInfo mHapInfo, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion) {
         String cpg = mHapInfo.getCpg();
         Integer cpgStart = cpgPosListInRegion.get(0);
@@ -401,6 +440,208 @@ public class Util {
                 }
             }
         }
+
+        /// 计算r2
+        Double r2 = 0.0;
+        Double pvalue = 0.0;
+        Double N = N00 + N01 + N10 + N11 + 0.0;
+        if(N == 0) {
+            r2 = Double.NaN;
+            pvalue = Double.NaN;
+        }
+        Double PA = (N10 + N11) / N;
+        Double PB = (N01 + N11) / N;
+        Double D = N11 / N - PA * PB;
+        Double Num = D * D;
+        Double Den = PA * (1 - PA) * PB * (1 - PB);
+        if (Den == 0.0) {
+            r2 = Double.NaN;
+        } else {
+            r2 = Num / Den;
+            if (D < 0) {
+                r2 = -1 * r2;
+            }
+        }
+
+        // 计算pvalue
+        BinomialDistribution binomialDistribution = new BinomialDistribution(N.intValue(), PA * PB);
+        Double pGreater = 1 - binomialDistribution.cumulativeProbability(N11);
+        Double pEqual = binomialDistribution.probability(N11);
+        pvalue = pGreater + pEqual;
+
+        r2Info.setN00(N00);
+        r2Info.setN01(N01);
+        r2Info.setN10(N10);
+        r2Info.setN11(N11);
+        r2Info.setR2(r2);
+        r2Info.setPvalue(pvalue);
+
+        return r2Info;
+    }
+
+    public TreeMap<String, List<MHapInfo>> parseMhapFileIndexByBarCodeAndStrand(String mhapPath, List<String> barcodeList,
+                                                                                String bcFile, Region region) throws IOException {
+        TreeMap<String, List<MHapInfo>> mHapListIndexByBarCode = new TreeMap<>();
+        TabixReader tabixReader = new TabixReader(mhapPath);
+        TabixReader.Iterator mhapIterator = tabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
+        String mHapLine = "";
+        Integer lineCnt = 0;
+        while((mHapLine = mhapIterator.next()) != null) {
+            lineCnt++;
+            if (lineCnt % 1000000 == 0) {
+                log.info("Read " + region.getChrom() + " mhap " + lineCnt + " lines.");
+            }
+            MHapInfo mHapInfo = new MHapInfo();
+            mHapInfo.setChrom(mHapLine.split("\t")[0]);
+            mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
+            mHapInfo.setEnd(Integer.valueOf(mHapLine.split("\t")[2]));
+            mHapInfo.setCpg(mHapLine.split("\t")[3]);
+            mHapInfo.setCnt(Integer.valueOf(mHapLine.split("\t")[4]));
+            mHapInfo.setStrand(mHapLine.split("\t")[5]);
+            mHapInfo.setBarcode(mHapLine.split("\t")[6]);
+
+            if (bcFile != null && !barcodeList.contains(mHapInfo.getBarcode())) {
+                continue;
+            } else {
+                String key = mHapInfo.getBarcode() + mHapInfo.getStrand();
+                List<MHapInfo> mHapListInMap = mHapListIndexByBarCode.get(key);
+                if (mHapListInMap != null && mHapListInMap.size() > 0) {
+                    mHapListInMap.add(mHapInfo);
+                } else {
+                    mHapListInMap = new ArrayList<>();
+                    mHapListInMap.add(mHapInfo);
+                }
+                mHapListIndexByBarCode.put(key, mHapListInMap);
+            }
+        }
+
+        tabixReader.close();
+        return mHapListIndexByBarCode;
+    }
+
+
+    public Map<Integer, Map<String, List<MHapInfo>>> getMhapListMapToCpg(Map<String, List<MHapInfo>> mHapListMapMap,
+                                                                         List<Integer> cpgPosListInRegion) throws Exception {
+        TreeMap<Integer, Map<String, List<MHapInfo>>> mHapListMapToCpg = new TreeMap<>();
+        Integer cpgStartIndex = 0;
+        Integer cpgEndIndex = 0;
+        Iterator<String> iterator = mHapListMapMap.keySet().iterator();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            List<MHapInfo> mHapList = mHapListMapMap.get(key);
+            for (Integer i = 0; i < mHapList.size(); i++) {
+                MHapInfo mHapInfo = mHapList.get(i);
+
+                // get the cpg postions in mhap line
+                if (mHapInfo.getStart() >= cpgPosListInRegion.get(0) && mHapInfo.getStart() <= cpgPosListInRegion.get(cpgPosListInRegion.size() - 1)) {
+                    cpgStartIndex = indexOfList(cpgPosListInRegion, 0 , cpgPosListInRegion.size() - 1, mHapInfo.getStart());
+                } else {
+                    cpgStartIndex = 0;
+                }
+                if (mHapInfo.getEnd() >= cpgPosListInRegion.get(0) && mHapInfo.getEnd() <= cpgPosListInRegion.get(cpgPosListInRegion.size() - 1)) {
+                    cpgEndIndex = indexOfList(cpgPosListInRegion, 0 , cpgPosListInRegion.size() - 1, mHapInfo.getEnd());
+                } else {
+                    cpgEndIndex = 0;
+                }
+
+                for (int j = cpgStartIndex; j <= cpgEndIndex; j++) {
+                    Map<String, List<MHapInfo>> mHapListMapInMap = mHapListMapToCpg.get(cpgPosListInRegion.get(j));
+                    if (mHapListMapInMap != null && mHapListMapInMap.size() > 0) {
+                        List<MHapInfo> mHapListInMap = mHapListMapInMap.get(key);
+                        if (mHapListInMap != null && mHapListInMap.size() > 0) {
+                            mHapListInMap.add(mHapInfo);
+                        } else {
+                            mHapListInMap = new ArrayList<>();
+                            mHapListInMap.add(mHapInfo);
+                        }
+                        mHapListMapInMap.put(key, mHapListInMap);
+                    } else {
+                        List<MHapInfo> mHapListInMap = new ArrayList<>();
+                        mHapListInMap.add(mHapInfo);
+                        mHapListMapInMap = new HashMap<>();
+                        mHapListMapInMap.put(key, mHapListInMap);
+                    }
+                    mHapListMapToCpg.put(cpgPosListInRegion.get(j), mHapListMapInMap);
+                }
+            }
+        }
+
+        return mHapListMapToCpg;
+    }
+
+    public R2Info getR2FromMap(Map<String, List<MHapInfo>> mHapListMap1, Map<String, List<MHapInfo>> mHapListMap2,
+                               List<Integer> cpgPosList1, List<Integer> cpgPosList2, Integer cpgPos1, Integer cpgPos2) {
+        R2Info r2Info = new R2Info();
+        Integer N00 = 0;
+        Integer N01 = 0;
+        Integer N10 = 0;
+        Integer N11 = 0;
+        if (cpgPos2 < cpgPos1) {
+            Integer temp = cpgPos2;
+            cpgPos2 = cpgPos1;
+            cpgPos1 = temp;
+        }
+
+        Iterator<String> iterator1 = mHapListMap1.keySet().iterator();
+        while (iterator1.hasNext()) {
+            String key = iterator1.next();
+            if (!mHapListMap2.containsKey(key)) {
+                iterator1.remove();
+            }
+        }
+        Iterator<String> iterator2 = mHapListMap2.keySet().iterator();
+        while (iterator2.hasNext()) {
+            String key = iterator2.next();
+            if (!mHapListMap1.containsKey(key)) {
+                iterator2.remove();
+            }
+        }
+
+        char cpg1;
+        iterator1 = mHapListMap1.keySet().iterator();
+        while (iterator1.hasNext()) {
+            String key1 = iterator1.next();
+            List<MHapInfo> mHapList1 = mHapListMap1.get(key1);
+            for (MHapInfo mHapInfo : mHapList1) {
+                Integer pos1 = indexOfList(cpgPosList1, 0, cpgPosList1.size() - 1, cpgPos1)
+                        - indexOfList(cpgPosList1, 0, cpgPosList1.size() - 1, mHapInfo.getStart());
+                cpg1 = mHapInfo.getCpg().charAt(pos1);
+            }
+        }
+
+        char cpg2;
+        iterator2 = mHapListMap2.keySet().iterator();
+        while (iterator2.hasNext()) {
+            String key2 = iterator2.next();
+            List<MHapInfo> mHapList2 = mHapListMap2.get(key2);
+            for (MHapInfo mHapInfo : mHapList2) {
+                Integer pos1 = indexOfList(cpgPosList2, 0, cpgPosList2.size() - 1, cpgPos1)
+                        - indexOfList(cpgPosList2, 0, cpgPosList2.size() - 1, mHapInfo.getStart());
+                cpg1 = mHapInfo.getCpg().charAt(pos1);
+            }
+        }
+
+//        for (int i = 0; i < mHapListIn2CpgPos.size(); i++) {
+//            MHapInfo mHapInfo = mHapListIn2CpgPos.get(i);
+//            Integer pos1 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos1) - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
+//            Integer pos2 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos2) - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
+//            if (mHapInfo.getCpg().charAt(pos1) == '0' && mHapInfo.getCpg().charAt(pos2) == '0') {
+//                N00 += mHapInfo.getCnt();
+//            } else if (mHapInfo.getCpg().charAt(pos1) == '0' && mHapInfo.getCpg().charAt(pos2) == '1') {
+//                N01 += mHapInfo.getCnt();
+//            } else if (mHapInfo.getCpg().charAt(pos1) == '1' && mHapInfo.getCpg().charAt(pos2) == '0') {
+//                N10 += mHapInfo.getCnt();
+//            } else if (mHapInfo.getCpg().charAt(pos1) == '1' && mHapInfo.getCpg().charAt(pos2) == '1') {
+//                N11 += mHapInfo.getCnt();
+//            }
+//            if (mHapInfo.getStart() > cpgPos1) {
+//                break;
+//            }
+//        }
+
+//        if ((N00 + N01 + N10 + N11) < r2Cov) {
+//            return null;
+//        }
 
         /// 计算r2
         Double r2 = 0.0;

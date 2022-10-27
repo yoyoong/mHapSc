@@ -9,10 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Flinkage {
     public static final Logger log = LoggerFactory.getLogger(Flinkage.class);
@@ -63,17 +60,29 @@ public class Flinkage {
                 Region region1 = regionList.get(i);
                 Region region2 = regionList.get(j);
 
-                // parse the mhap file
-                Map<String, List<MHapInfo>> mHapListMap1 = util.parseMhapFile(args.getMhapPath(), barcodeList, 
+                TreeMap<String, List<MHapInfo>> mHapListMap1 = util.parseMhapFileIndexByBarCodeAndStrand(args.getMhapPath(), barcodeList,
                         args.getBcFile(), region1);
-                Map<String, List<MHapInfo>> mHapListMap2 = util.parseMhapFile(args.getMhapPath(), barcodeList,
+                TreeMap<String, List<MHapInfo>> mHapListMap2 = util.parseMhapFileIndexByBarCodeAndStrand(args.getMhapPath(), barcodeList,
                         args.getBcFile(), region2);
 
+                // filter the same barcode&strand of mHapListMap1 and mHapListMap2, and merge the list of same barcode
+                TreeMap<String, List<MHapInfo>> mHapListMapMerged = new TreeMap<>();
+                Iterator<String> iterator = mHapListMap1.keySet().iterator();
+                while (iterator.hasNext()) {
+                    String key = iterator.next();
+                    if (mHapListMap2.containsKey(key)) { // exist, merge the list
+                        List<MHapInfo> mHapInfoList1 = mHapListMap1.get(key);
+                        List<MHapInfo> mHapInfoList2 = mHapListMap2.get(key);
+                        mHapInfoList1.addAll(mHapInfoList2);
+                        mHapListMapMerged.put(key, mHapInfoList1);
+                    }
+                }
+
                 // parse the cpg file
-                List<Integer> cpgPosList1 = util.parseCpgFile(args.getCpgPath(), region1);
+;               List<Integer> cpgPosList1 = util.parseCpgFile(args.getCpgPath(), region1);
                 List<Integer> cpgPosList2 = util.parseCpgFile(args.getCpgPath(), region2);
 
-                boolean getFlinkageResult = getFlinkage(mHapListMap1, mHapListMap2, cpgPosList1, cpgPosList2, region1, region2, bufferedWriter);
+                boolean getFlinkageResult = getFlinkage(mHapListMapMerged, cpgPosList1, cpgPosList2, region1, region2, bufferedWriter);
                 if (!getFlinkageResult) {
                     log.error("getFlinkage fail, please check the command.");
                     return;
@@ -90,7 +99,7 @@ public class Flinkage {
         return true;
     }
 
-    private boolean getFlinkage(Map<String, List<MHapInfo>> mHapListMap1, Map<String, List<MHapInfo>> mHapListMap2,
+    private boolean getFlinkage(TreeMap<String, List<MHapInfo>> mHapListMapMerged,
                                 List<Integer> cpgPosList1, List<Integer> cpgPosList2, Region region1, Region region2,
                                 BufferedWriter bufferedWriter) throws Exception {
         // 提取查询区域内的甲基化位点列表
@@ -100,34 +109,16 @@ public class Flinkage {
         cpgPosListInRegion.addAll(cpgPosListInRegion1);
         cpgPosListInRegion.addAll(cpgPosListInRegion2);
 
-        // filter the same barcode of mHapListMap1 and mHapListMap2, and merge the list of same barcode
-        Iterator<String> iterator = mHapListMap1.keySet().iterator();
-        while (iterator.hasNext()) {
-            String key = iterator.next();
-            if (mHapListMap2.containsKey(key)) { // exist, merge the list
-                List<MHapInfo> mHapInfoList1 = mHapListMap1.get(key);
-                List<MHapInfo> mHapInfoList2 = mHapListMap2.get(key);
-                mHapInfoList1.addAll(mHapInfoList2);
-                mHapListMap1.put(key, mHapInfoList1);
-            } else { // not exist, remove
-                iterator.remove();
-            }
-
-        }
-
-        // 计算行数
-        Integer rowNum = util.getMhapMapRowNum(mHapListMap1);
-
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap1);
+        Integer[][] cpgMatrix = util.getCpgMatrix(mHapListMapMerged, cpgPosListInRegion);
 
         // calculate the r2Info of erery position
         Integer totalR2Num = cpgPosListInRegion1.size() * cpgPosListInRegion2.size();
         Integer realR2Num = 0;
         for (int i = 0; i < cpgPosListInRegion1.size(); i++) {
             for (int j = cpgPosListInRegion1.size(); j < cpgPosListInRegion.size(); j++) {
-                R2Info r2Info = util.getR2Info(cpgHpMatInRegion, i, j, rowNum);
-                if (r2Info.getR2() > 0.5 && r2Info.getPvalue() < 0.05) {
+                R2Info r2Info = util.getR2Info(cpgMatrix, i, j, cpgMatrix.length);
+                if (r2Info != null && r2Info.getR2() != Double.NaN && r2Info.getR2() > 0.5 && r2Info.getPvalue() < 0.05) {
                     realR2Num++;
                 }
 //                bufferedWriter.write(region1.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" + cpgPosListInRegion.get(j) + "\t"
@@ -141,5 +132,4 @@ public class Flinkage {
 
         return true;
     }
-
 }
