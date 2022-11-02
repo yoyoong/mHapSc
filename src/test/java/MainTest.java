@@ -8,15 +8,16 @@ public class MainTest extends TestCase {
     public void test_convert() throws Exception {
         Main main = new Main();
         String arg0 = "convert";
-        String arg1 = "-bedPath";
-        String arg2 = "GSM2697488.bed";
+        String arg1 = "-inputPath";
+        String arg2 = "methylation-log.tsv.gz";
         String arg3 = "-cpgPath";
-        String arg4 = "hg19_CpG.gz";
-        String arg7 = "-outputDir";
-        String arg8 = "outputDir";
-        String arg5 = "-tag";
-        String arg6 = "GSM2697488";
-        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8};
+        String arg4 = "hg38_CpG.gz";
+        String arg5 = "-outputDir";
+        String arg6 = "outputDir";
+        String arg7 = "-tag";
+        String arg8 = "nanopolish_test";
+        String arg9 = "-nanopolish";
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9};
 
         String argsStr = "";
         for (int i = 0; i < args.length; i++) {

@@ -46,18 +46,20 @@ public class Main {
     }
 
     private static ConvertArgs parseConvert(String[] args) throws ParseException {
-        String bedPath_Description = "bed file";
+        String inputPath_Description = "input file, gz format";
         String cpgPath_Description = "genomic CpG file, gz format and indexed";
         String outputDir_Description = "output directory, created in advance";
         String tag_Description = "prefix of the output file(s)";
+        String nanopolish_Description = "whether inputPath is nanopolish file";
 
         Options options = new Options();
         Option option0 = OptionBuilder.withLongOpt("help").withDescription("help").create("h");
-        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("bedPath").hasArg().withDescription(bedPath_Description).create("bedPath");
+        Option option1 = OptionBuilder.withArgName("com/args").withLongOpt("inputPath").hasArg().withDescription(inputPath_Description).create("inputPath");
         Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").hasArg().withDescription(cpgPath_Description).create("cpgPath");
         Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").hasArg().withDescription(outputDir_Description).create("outputDir");
         Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("tag").hasArg().withDescription(tag_Description).create("tag");
-        options.addOption(option0).addOption(option1).addOption(option2).addOption(option3).addOption(option4);
+        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("nanopolish").withDescription(tag_Description).create("nanopolish");
+        options.addOption(option0).addOption(option1).addOption(option2).addOption(option3).addOption(option4).addOption(option5);
 
         BasicParser parser = new BasicParser();
         ConvertArgs convertArgs = new ConvertArgs();
@@ -69,10 +71,13 @@ public class Main {
                 hf.printHelp("Options", options);
                 return null;
             } else {
-                convertArgs.setBedPath(commandLine.getOptionValue("bedPath"));
+                convertArgs.setInputPath(commandLine.getOptionValue("inputPath"));
                 convertArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
                 convertArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
                 convertArgs.setTag(commandLine.getOptionValue("tag"));
+                if (commandLine.hasOption("nanopolish")) {
+                    convertArgs.setNanopolish(true);
+                }
             }
         } else {
             System.out.println("The paramter is null");
