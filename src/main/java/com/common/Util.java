@@ -206,6 +206,32 @@ public class Util {
         return cpgPosListInRegion;
     }
 
+    public List<Region> splitRegionToSmallRegion(Region region, Integer splitSize, Integer shift) {
+        List<Region> regionList = new ArrayList<>();
+        if (region.getEnd() - region.getStart() > splitSize) {
+            Integer regionNum = (region.getEnd() - region.getStart()) / splitSize + 1;
+            for (int i = 0; i < regionNum; i++) {
+                Region newRegion = new Region();
+                newRegion.setChrom(region.getChrom());
+                newRegion.setStart(region.getStart());
+                if (region.getStart() + splitSize + shift - 1 <= region.getEnd()) {
+                    newRegion.setEnd(region.getStart() + splitSize + shift - 1);
+                } else {
+                    newRegion.setEnd(region.getEnd());
+                }
+                regionList.add(newRegion);
+                if (newRegion.getEnd() - shift + 1 < 1) {
+                    region.setStart(newRegion.getEnd() + 1);
+                } else {
+                    region.setStart(newRegion.getEnd() - shift + 1);
+                }
+            }
+        } else {
+            regionList.add(region);
+        }
+        return regionList;
+    }
+
     public Map<String, List<MHapInfo>> parseMhapFile(String mhapPath, List<String> barcodeList, String bcFile, Region region) throws IOException {
         TabixReader tabixReader = new TabixReader(mhapPath);
         TabixReader.Iterator mhapIterator = tabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
@@ -243,57 +269,6 @@ public class Util {
 
         tabixReader.close();
         return mHapListMap;
-    }
-
-    public List<Region> getWholeRegionFromFile(String filePath, boolean hasHeadLine) throws Exception {
-        List<Region> wholeRegionList = new ArrayList<>();
-        InputStream inputStream = new GZIPInputStream(new FileInputStream(new File(filePath)));
-        Scanner scanner = new Scanner(inputStream);
-
-        String mHapLine = "";
-        if (hasHeadLine) {
-            mHapLine = scanner.nextLine();
-        } else {
-            mHapLine = "";
-        }
-        String lastChrom = "";
-        Integer lastStart = 0;
-        Integer lastEnd = 0;
-        Integer lineCnt = 0;
-        while (scanner.hasNext()) {
-            mHapLine = scanner.nextLine();
-            lineCnt++;
-            if (lineCnt % 1000000 == 0) {
-                log.info("Read mhap complete " + lineCnt + " lines.");
-            }
-
-            if (!lastChrom.equals("")) {
-                if (!mHapLine.split("\t")[0].equals(lastChrom)) {
-                    Region region = new Region();
-                    region.setChrom(lastChrom);
-                    region.setStart(lastStart);
-                    region.setEnd(lastEnd);
-                    wholeRegionList.add(region);
-                    lastEnd = 0;
-                    lastChrom = mHapLine.split("\t")[0];
-                    lastStart = Integer.valueOf(mHapLine.split("\t")[1]);
-                } else {
-                    if (lastEnd < Integer.valueOf(mHapLine.split("\t")[2])) {
-                        lastEnd = Integer.valueOf(mHapLine.split("\t")[2]);
-                    }
-                }
-            } else {
-                lastChrom = mHapLine.split("\t")[0];
-                lastStart = Integer.valueOf(mHapLine.split("\t")[1]);
-            }
-        }
-        Region region = new Region();
-        region.setChrom(lastChrom);
-        region.setStart(lastStart);
-        region.setEnd(lastEnd);
-        wholeRegionList.add(region);
-
-        return wholeRegionList;
     }
     
     public Integer getMhapMapRowNum(Map<String, List<MHapInfo>> mHapListMap) {

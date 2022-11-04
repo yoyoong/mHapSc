@@ -13,9 +13,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MHBDiscovery {
     public static final Logger log = LoggerFactory.getLogger(MHBDiscovery.class);
@@ -36,14 +35,87 @@ public class MHBDiscovery {
         }
 
         // get regionList, from region or bedfile
+        List<Region> regionList = new ArrayList<>();
         if (args.getRegion() != null && !args.getRegion().equals("")) {
-            Region region = new Region();
-            region.setChrom(args.getRegion().split(":")[0]);
-            region.setStart(Integer.valueOf(args.getRegion().split(":")[1].split("-")[0]));
-            region.setEnd(Integer.valueOf(args.getRegion().split(":")[1].split("-")[1]));
-            regionList.add(region);
+            Region region = util.parseRegion(args.getRegion());
+            regionList.addAll(util.splitRegionToSmallRegion(region, 10000, 1000));
+        } else if (args.getBedFile() != null && !args.getBedFile().equals("")) {
+            List<Region> regionListInBed = util.parseBedFile(args.getBedFile());
+            // merge adjacent regions
+            List<Region> regionListMerged = new ArrayList<>();
+            Map<String, List<Integer>> cpgPosListMap = util.parseWholeCpgFile(args.getCpgPath());
+            Iterator<String> iterator = cpgPosListMap.keySet().iterator();
+            while (iterator.hasNext()) {
+                String chrom = iterator.next();
+                List<Region> regionListInChrom = regionListInBed.stream().filter(region -> region.getChrom().equals(chrom)).collect(Collectors.toList());
+                if (regionListInChrom.size() > 1) {
+                    for (Integer i = 0; i < regionListInChrom.size() - 1;) {
+                        Region thisRegion = regionListInChrom.get(i);
+                        Integer start = thisRegion.getStart();
+                        Region nextRegion = regionListInChrom.get(i + 1);
+                        Integer end = nextRegion.getEnd();
+                        List<Integer> cpgPosList = cpgPosListMap.get(thisRegion.getChrom());
+                        List<Integer> cpgPosListInThisRegion = util.getcpgPosListInRegion(cpgPosList, thisRegion);
+                        List<Integer> cpgPosListInNextRegion = util.getcpgPosListInRegion(cpgPosList, nextRegion);
+                        Integer thisRegionEndCpgIndex = util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1,
+                                cpgPosListInThisRegion.get(cpgPosListInThisRegion.size() - 1));
+                        Integer nextRegionStartCpgIndex = util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1,
+                                cpgPosListInNextRegion.get(0));
+                        if (nextRegionStartCpgIndex <= thisRegionEndCpgIndex + 1) {
+                            int nextNum = 2;
+                            while (i + nextNum < regionListInChrom.size() && nextRegionStartCpgIndex <= thisRegionEndCpgIndex + 1) {
+                                thisRegion = regionListInChrom.get(i + nextNum - 1);
+                                cpgPosListInThisRegion = util.getcpgPosListInRegion(cpgPosList, thisRegion);
+                                thisRegionEndCpgIndex = util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1,
+                                        cpgPosListInThisRegion.get(cpgPosListInThisRegion.size() - 1));
+                                nextRegion = regionListInChrom.get(i + nextNum);
+                                cpgPosListInNextRegion = util.getcpgPosListInRegion(cpgPosList, nextRegion);
+                                nextRegionStartCpgIndex = util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1,
+                                        cpgPosListInNextRegion.get(0));
+                                nextNum++;
+                            }
+                            if (i + nextNum == regionListInChrom.size()) {
+                                end = nextRegion.getEnd();
+                            } else {
+                                end = thisRegion.getEnd();
+                            }
+
+                            Region mergeRegion = new Region();
+                            mergeRegion.setChrom(chrom);
+                            mergeRegion.setStart(start);
+                            mergeRegion.setEnd(end);
+                            regionListMerged.add(mergeRegion);
+                            i += (nextNum - 1);
+                        } else {
+                            i++;
+                            regionListMerged.add(thisRegion);
+                        }
+                    }
+                } else {
+                    regionListMerged.add(regionListInChrom.get(0));
+                }
+            }
+            for (Region region : regionListMerged) {
+                regionList.addAll(util.splitRegionToSmallRegion(region, 1000000, 1000));
+            }
         } else {
-            regionList = util.parseBedFile(args.getBedFile());
+//            List<Region> wholeRegionList = util.getWholeRegionFromMHapFile(args.getmHapPath());
+            List<Region> wholeRegionList = new ArrayList<>();
+            Map<String, List<Integer>> cpgPostListMap = util.parseWholeCpgFile(args.getCpgPath());
+            Iterator<String> iterator = cpgPostListMap.keySet().iterator();
+            while (iterator.hasNext()) {
+                String chrom = iterator.next();
+                List<Integer> cpgPostList = cpgPostListMap.get(chrom);
+                Region region = new Region();
+                region.setChrom(chrom);
+                region.setStart(cpgPostList.get(0));
+                region.setEnd(cpgPostList.get(cpgPostList.size() - 1));
+                wholeRegionList.add(region);
+            }
+
+            for (Region region : wholeRegionList) {
+                regionList.addAll(util.splitRegionToSmallRegion(region, 1000000, 1000));
+            }
         }
 
         // get bcFile
@@ -58,48 +130,45 @@ public class MHBDiscovery {
         }
 
         // create the output directory and file
-        BufferedWriter mhbBufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".bed");
+        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".bed");
 
+        Map<String, String> mhbInfoListMap = new HashMap<>();
         for (Region region : regionList) {
+            // parse the mhap file
+            //List<MHapInfo> mHapInfoList = util.parseMhapFile(args.getmHapPath(), region, "both", true);
+            Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFileIndexByBarCodeAndStrand(args.getmHapPath(), barcodeList, args.getBcFile(), region);
+            if (mHapListMap.size() < 1) {
+                continue;
+            }
+
             // parse the cpg file
             List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
+            if (cpgPosList.size() < 1) {
+                continue;
+            }
 
             // get cpg site list in region
-            Integer cpgStartPos = 0;
-            Integer cpgEndPos = cpgPosList.size() - 1;
-            for (int i = 0; i < cpgPosList.size(); i++) {
-                if (cpgPosList.get(i) < region.getStart() && cpgPosList.get(i + 1) >= region.getStart()) {
-                    cpgStartPos = i + 1;
-                    break;
-                }
+            List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
+            if (cpgPosListInRegion.size() < 1) {
+                continue;
             }
-            for (int i = 0; i < cpgPosList.size(); i++) {
-                if (cpgPosList.get(i) >= region.getEnd()) {
-                    cpgEndPos = i;
-                    break;
-                }
-            }
-            List<Integer> cpgPosListInRegion = cpgPosList.subList(cpgStartPos, cpgEndPos + 2); // end site add 1
 
-            List<MHBInfo> mhbInfoList = new ArrayList<>();
             Integer startIndex = 0; // start mhb position index in cpgPosListInRegion
             Integer endIndex = 0; // end mhb position index in cpgPosListInRegion
+            Integer index = 0;
             while (endIndex < cpgPosListInRegion.size() - 1) {
-                MHBInfo mhbInfo = new MHBInfo();
                 endIndex++;
                 Boolean extendFlag = true;
-                Integer index = 0;
                 for (int i = 1; i < args.getWindow(); i++) {
                     index = endIndex - i; // cpg site index in cpgPosListInRegion for loop
                     if (index < 0) {
                         break;
                     }
 
-                    // parse the mhap file
-                    Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getmHapPath(), barcodeList, args.getBcFile(), region);
+                    Integer[][] cpgMatrix = util.getCpgMatrix(mHapListMap, cpgPosListInRegion);
 
                     // get r2 and pvalue of startIndex
-                    R2Info r2Info= getR2(mHapListMap, cpgPosList, cpgPosListInRegion, index, endIndex);
+                    R2Info r2Info = util.getR2Info(cpgMatrix, index, endIndex, cpgMatrix.length);
 //                    System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
 //                            + r2Info.getR2() + "\t" + r2Info.getPvalue());
                     if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
@@ -109,59 +178,51 @@ public class MHBDiscovery {
                 }
 
                 if (!extendFlag) {
+                    MHBInfo mhbInfo = new MHBInfo();
                     Integer mhbSize = endIndex - startIndex;
-                    Integer mhbStart = startIndex;
-                    Integer mhbEnd = endIndex - 1;
-                    startIndex = endIndex;
-                    if (mhbSize >= args.getWindow()) {
-                        mhbInfo.setChrom(region.getChrom());
-                        mhbInfo.setStart(cpgPosListInRegion.get(mhbStart));
-                        mhbInfo.setEnd(cpgPosListInRegion.get(mhbEnd));
-                        mhbInfoList.add(mhbInfo);
-
-                        mhbBufferedWriter.write(mhbInfo.getChrom() + "\t" + mhbInfo.getStart() + "\t" + mhbInfo.getEnd() + "\n");
+                    mhbInfo.setChrom(region.getChrom());
+                    mhbInfo.setStart(cpgPosListInRegion.get(startIndex));
+                    mhbInfo.setEnd(cpgPosListInRegion.get(endIndex - 1));
+                    startIndex = index + 1 > startIndex ? index + 1 : startIndex;
+                    if (mhbSize >= args.getWindow() && !mhbInfoListMap.containsKey(mhbInfo.toString())) {
+                        mhbInfoListMap.put(mhbInfo.toString(), mhbInfo.toString());
+                        //log.info("discovery a mhb in : " + mhbInfo.getChrom() + ":" + mhbInfo.getStart() + "-" + mhbInfo.getEnd());
+                        bufferedWriter.write(mhbInfo.getChrom() + "\t" + mhbInfo.getStart() + "\t" + mhbInfo.getEnd() + "\n");
                     }
                 }
             }
-        }
-        mhbBufferedWriter.close();
 
+            if (endIndex - startIndex >= args.getWindow()) {
+                MHBInfo mhbInfo = new MHBInfo();
+                mhbInfo.setChrom(region.getChrom());
+                mhbInfo.setStart(cpgPosListInRegion.get(startIndex));
+                mhbInfo.setEnd(cpgPosListInRegion.get(endIndex - 1));
+                if (!mhbInfoListMap.containsKey(mhbInfo.toString())) {
+                    mhbInfoListMap.put(mhbInfo.toString(), mhbInfo.toString());
+                    bufferedWriter.write(mhbInfo.getChrom() + "\t" + mhbInfo.getStart() + "\t" + mhbInfo.getEnd() + "\n");
+                }
+            }
+            log.info("Get MHB from region: " + region.toHeadString() + " end!");
+        }
+
+        bufferedWriter.close();
         log.info("MHBDiscovery end!");
     }
 
     private boolean checkArgs() {
+        if (args.getmHapPath().equals("")) {
+            log.error("mhapPath can not be null.");
+            return false;
+        }
+        if (args.getCpgPath().equals("")) {
+            log.error("cpgPath can not be null.");
+            return false;
+        }
+        if (!args.getRegion().equals("") && !args.getBedFile().equals("")) {
+            log.error("Can not input region and bedPath at the same time.");
+            return false;
+        }
 
         return true;
-    }
-
-    private R2Info getR2(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion,
-                         Integer firstIndex, Integer secondIndex) throws Exception {
-        // calculate the row number
-        Integer rowNum = util.getMhapMapRowNum(mHapListMap);
-
-        // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
-
-        R2Info r2Info = util.getR2Info(cpgHpMatInRegion, firstIndex, secondIndex, rowNum);
-
-        return r2Info;
-    }
-
-    private Integer[][] getMC(List<MHapInfo> mHapInfoList, List<Integer> cpgPosListInRegion) {
-        Integer[][] MC = new Integer[mHapInfoList.size()][cpgPosListInRegion.size()];
-
-        return MC;
-    }
-
-    private Integer[][] getM1(List<MHapInfo> mHapInfoList, List<Integer> cpgPosListInRegion) {
-        Integer[][] M1 = new Integer[mHapInfoList.size()][cpgPosListInRegion.size()];
-
-        return M1;
-    }
-
-    private Integer[][] getM0(List<MHapInfo> mHapInfoList, List<Integer> cpgPosListInRegion) {
-        Integer[][] M0 = new Integer[mHapInfoList.size()][cpgPosListInRegion.size()];
-
-        return M0;
     }
 }
