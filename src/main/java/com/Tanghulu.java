@@ -103,8 +103,8 @@ public class Tanghulu {
 
         // get cpg site list in region
         List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
-        Integer cpgStart = cpgPosList.get(0);
-        Integer cpgEnd = cpgPosList.get(cpgPosListInRegion.size() - 1);
+        Integer cpgStart = cpgPosListInRegion.get(0);
+        Integer cpgEnd = cpgPosListInRegion.get(cpgPosListInRegion.size() - 1);
 
         // 创建数据集
         Iterator<String> iterator = mHapListMap.keySet().iterator();
@@ -128,10 +128,7 @@ public class Tanghulu {
                 MHapInfo mHapInfo = mHapInfoList.get(i);
                 String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);
 
-                Integer start = mHapInfo.getStart();
-                if (mHapInfo.getStart() < cpgStart) { // mhap.start在region.start左边
-                    start = cpgStart;
-                }
+                Integer start = mHapInfo.getStart() < cpgStart ? cpgStart : mHapInfo.getStart();
 
                 XYSeries allSeries = new XYSeries(i + mHapInfo.indexByRead() + "_" + cpg +
                         "/" + mHapInfo.getBarcode()); // 将mhap中的cpg和cnt存入，合并时显示合并read数用
@@ -140,33 +137,33 @@ public class Tanghulu {
                 if (plusFlag && minusFlag) {
                     if (mHapInfo.getStrand().equals("+")) {
                         for (int j = 0; j < cpg.length(); j++) {
-                            Integer pos = cpgPosList.indexOf(start); // mhap某行起点在cpgPosList的位置
-                            allSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 1));
+                            Integer pos = cpgPosListInRegion.indexOf(start); // mhap某行起点在cpgPosList的位置
+                            allSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 1));
                             if (cpg.charAt(j) == '1') {
-                                cpgSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 1));
+                                cpgSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 1));
                             } else {
-                                unCpgSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 1));
+                                unCpgSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 1));
                             }
                         }
                     } else {
                         for (int j = 0; j < cpg.length(); j++) {
-                            Integer pos = cpgPosList.indexOf(start); // mhap某行起点在cpgPosList的位置
-                            allSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 2));
+                            Integer pos = cpgPosListInRegion.indexOf(start); // mhap某行起点在cpgPosList的位置
+                            allSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 2));
                             if (cpg.charAt(j) == '1') {
-                                cpgSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 2));
+                                cpgSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 2));
                             } else {
-                                unCpgSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 2));
+                                unCpgSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 2));
                             }
                         }
                     }
                 } else {
                     for (int j = 0; j < cpg.length(); j++) {
-                        Integer pos = cpgPosList.indexOf(start); // mhap某行起点在cpgPosList的位置
-                        allSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 1));
+                        Integer pos = cpgPosListInRegion.indexOf(start); // mhap某行起点在cpgPosList的位置
+                        allSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 1));
                         if (cpg.charAt(j) == '1') {
-                            cpgSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 1));
+                            cpgSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 1));
                         } else {
-                            unCpgSeries.add(cpgPosList.get(pos + j), Integer.valueOf(rowNum + 1));
+                            unCpgSeries.add(cpgPosListInRegion.get(pos + j), Integer.valueOf(rowNum + 1));
                         }
                     }
                 }
@@ -274,7 +271,7 @@ public class Tanghulu {
         ValueAxis domainAxis = xyPlot.getDomainAxis();
         domainAxis.setVisible(false);
 //        domainAxis.setLowerMargin(0.1);
-        domainAxis.setUpperMargin((1 - rate) * 10);
+        //domainAxis.setUpperMargin((1 - rate) * 10);
 
         // Y轴设置
         NumberAxis rangeAxis = (NumberAxis) xyPlot.getRangeAxis();

@@ -38,7 +38,7 @@ public class MHBDiscovery {
         List<Region> regionList = new ArrayList<>();
         if (args.getRegion() != null && !args.getRegion().equals("")) {
             Region region = util.parseRegion(args.getRegion());
-            regionList.addAll(util.splitRegionToSmallRegion(region, 10000, 1000));
+            regionList.addAll(util.splitRegionToSmallRegion(region, 100000, 1000));
         } else if (args.getBedFile() != null && !args.getBedFile().equals("")) {
             List<Region> regionListInBed = util.parseBedFile(args.getBedFile());
             // merge adjacent regions
@@ -96,7 +96,7 @@ public class MHBDiscovery {
                 }
             }
             for (Region region : regionListMerged) {
-                regionList.addAll(util.splitRegionToSmallRegion(region, 1000000, 1000));
+                regionList.addAll(util.splitRegionToSmallRegion(region, 100000, 1000));
             }
         } else {
 //            List<Region> wholeRegionList = util.getWholeRegionFromMHapFile(args.getmHapPath());
@@ -114,7 +114,7 @@ public class MHBDiscovery {
             }
 
             for (Region region : wholeRegionList) {
-                regionList.addAll(util.splitRegionToSmallRegion(region, 1000000, 1000));
+                regionList.addAll(util.splitRegionToSmallRegion(region, 100000, 1000));
             }
         }
 
@@ -130,7 +130,7 @@ public class MHBDiscovery {
         }
 
         // create the output directory and file
-        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".bed");
+        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".txt");
 
         Map<String, String> mhbInfoListMap = new HashMap<>();
         for (Region region : regionList) {
@@ -165,10 +165,11 @@ public class MHBDiscovery {
                         break;
                     }
 
-                    Integer[][] cpgMatrix = util.getCpgMatrix(mHapListMap, cpgPosListInRegion);
+                    // get r2 and pvalue of index and endIndex
+                    R2Info r2Info = util.getR2FromMap(mHapListMap, cpgPosList, cpgPosListInRegion.get(index), cpgPosListInRegion.get(endIndex));
 
-                    // get r2 and pvalue of startIndex
-                    R2Info r2Info = util.getR2Info(cpgMatrix, index, endIndex, cpgMatrix.length);
+//                    Integer[][] cpgMatrix = util.getCpgMatrix1(mHapListMap, cpgPosList, cpgPosListInRegion);
+//                    R2Info r2Info = util.getR2Info(cpgMatrix, index, endIndex, cpgMatrix.length);
 //                    System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
 //                            + r2Info.getR2() + "\t" + r2Info.getPvalue());
                     if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
