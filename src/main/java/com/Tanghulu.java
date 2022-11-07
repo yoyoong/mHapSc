@@ -271,7 +271,7 @@ public class Tanghulu {
         ValueAxis domainAxis = xyPlot.getDomainAxis();
         domainAxis.setVisible(false);
 //        domainAxis.setLowerMargin(0.1);
-        //domainAxis.setUpperMargin((1 - rate) * 10);
+        domainAxis.setUpperMargin((1 - rate) * 10);
 
         // Y轴设置
         NumberAxis rangeAxis = (NumberAxis) xyPlot.getRangeAxis();
