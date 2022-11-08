@@ -18,25 +18,39 @@ public class Main {
         if (args != null && args[0] != null && !"".equals(args[0])) {
             if (args[0].equals("convert")) {
                 ConvertArgs convertArgs = parseConvert(args);
-                convert.convert(convertArgs);
+                if (convertArgs != null) {
+                    convert.convert(convertArgs);
+                }
             } else if (args[0].equals("tanghulu")) {
                 TanghuluArgs tanghuluArgs = parseTanghulu(args);
-                tanghulu.tanghulu(tanghuluArgs);
+                if (tanghuluArgs != null) {
+                    tanghulu.tanghulu(tanghuluArgs);
+                }
             } else if (args[0].equals("R2")) {
                 R2Args r2Args = parseR2(args);
-                r2.R2(r2Args);
+                if (r2Args != null) {
+                    r2.R2(r2Args);
+                }
             } else if (args[0].equals("MHBDiscovery")) {
                 MHBDiscoveryArgs mhbDiscoveryArgs = parseMHBDiscovery(args);
-                mhbDiscovery.MHBDiscovery(mhbDiscoveryArgs);
+                if (mhbDiscoveryArgs != null) {
+                    mhbDiscovery.MHBDiscovery(mhbDiscoveryArgs);
+                }
             } else if (args[0].equals("hemiM")) {
                 HemiMArgs hemiMArgs = parseHemiM(args);
-                hemiM.hemiM(hemiMArgs);
+                if (hemiMArgs != null) {
+                    hemiM.hemiM(hemiMArgs);
+                }
             } else if (args[0].equals("track")) {
                 TrackArgs trackMArgs = parseTrack(args);
-                track.track(trackMArgs);
+                if (trackMArgs != null) {
+                    track.track(trackMArgs);
+                }
             } else if (args[0].equals("flinkage")) {
                 FlinkageArgs flinkageMArgs = parseFlinkage(args);
-                flinkage.flinkage(flinkageMArgs);
+                if (flinkageMArgs != null) {
+                    flinkage.flinkage(flinkageMArgs);
+                }
             } else {
                 System.out.println("unrecognized command:" + args[0]);
             }

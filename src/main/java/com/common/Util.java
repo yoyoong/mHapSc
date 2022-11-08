@@ -253,7 +253,7 @@ public class Util {
             mHapInfo.setStrand(mHapLine.split("\t")[5]);
             mHapInfo.setBarcode(mHapLine.split("\t")[6]);
 
-            if (bcFile != null && !barcodeList.contains(mHapInfo.getBarcode())) {
+            if (!bcFile.equals("") && !barcodeList.contains(mHapInfo.getBarcode())) {
                 continue;
             } else {
                 if (mHapListMap.containsKey(mHapInfo.getBarcode())) {
@@ -560,7 +560,7 @@ public class Util {
             mHapInfo.setStrand(mHapLine.split("\t")[5]);
             mHapInfo.setBarcode(mHapLine.split("\t")[6]);
 
-            if (bcFile != null && !barcodeList.contains(mHapInfo.getBarcode())) {
+            if (!bcFile.equals("") && !barcodeList.contains(mHapInfo.getBarcode())) {
                 continue;
             } else {
                 String key = mHapInfo.getBarcode() + mHapInfo.getStrand();

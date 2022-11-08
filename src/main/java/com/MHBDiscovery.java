@@ -119,15 +119,7 @@ public class MHBDiscovery {
         }
 
         // get bcFile
-        List<String> barcodeList = new ArrayList<>();
-        if (args.getBcFile() != null) {
-            File bcFile = new File(args.getBcFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(bcFile));
-            String bcLine = "";
-            while ((bcLine = bufferedReader.readLine()) != null && !bcLine.equals("")) {
-                barcodeList.add(bcLine.split("\t")[0]);
-            }
-        }
+        List<String> barcodeList = util.parseBcFile(args.getBcFile());
 
         // create the output directory and file
         BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".txt");

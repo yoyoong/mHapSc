@@ -97,8 +97,8 @@ public class MainTest extends TestCase {
         String arg4 = "chr1:3229375-3230473";
         String arg5 = "-cpgPath";
         String arg6 = "hg19_CpG.gz";
-        String arg7 = "-bcFile";
-        String arg8 = "CRC_LN.txt";
+//        String arg7 = "-bcFile";
+//        String arg8 = "CRC_LN.txt";
         String arg9 = "-window";
         String arg10 = "5";
         String arg11 = "-r2";
@@ -110,7 +110,8 @@ public class MainTest extends TestCase {
         String arg17 = "-tag";
         String arg18 = "CRC_hg19_MHB";
         String arg19 = "-qc";
-        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
+        //String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
 
         String argsStr = "";
         for (int i = 0; i < args.length; i++) {
