@@ -72,7 +72,7 @@ public class MHapInfo implements Serializable {
     }
 
     public String indexByRead() {
-        return this.chrom + this.start+ this.end + this.cpg + this.barcode;
+        return this.chrom + this.start+ this.end + this.cpg + this.barcode + this.getStrand();
     }
 
     public String print() {
