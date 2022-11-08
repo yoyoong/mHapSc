@@ -108,6 +108,25 @@ public class Flinkage {
     }
 
     private boolean checkArgs() {
+        if (args.getMhapPath().equals("")) {
+            log.error("mhapPath can not be null.");
+            return false;
+        }
+        if (args.getCpgPath().equals("")) {
+            log.error("cpgPath can not be null.");
+            return false;
+        }
+        if (args.getBedFile().equals("")) {
+            if (!(args.getRegion1().equals("") && args.getRegion2().equals(""))) {
+                log.error("Region1 and region2 should be input at the same time.");
+                return false;
+            }
+        } else {
+            if (!args.getRegion1().equals("") || !args.getRegion2().equals("")) {
+                log.error("Region1 and region2 should be null when input bedfile.");
+                return false;
+            }
+        }
 
         return true;
     }

@@ -52,7 +52,7 @@ public class HemiM {
             Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
 
             // parse the cpg file
-            List<Integer> cpgPosList = util.parseCpgFile(args.getCpgPath(), region);
+            List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, SHIFT);
 
             // get cpg site list in region
             List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
@@ -88,7 +88,6 @@ public class HemiM {
 
                         Integer pos = util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPosListInRegion.get(0)) -
                                 util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
-
                         if (mHapInfo.getStrand().equals("+")) {
                             for (int j = 0; j < cpg.length(); j++) {
                                 if (0 <= (j - pos) && (j - pos) < cpgPosListInRegion.size()) {
@@ -107,17 +106,10 @@ public class HemiM {
                     for (int i = 0; i < cpgPosListInRegion.size(); i++) {
                         if (plusList[i] != null && minusList[i] != null && plusList[i] != minusList[i]) {
                             String barCode = mHapInfoList.get(0).getBarcode();
-                            if (plusList[i] == 0 && minusList[i] == 1) {
-                                bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  "0" +
-                                        "\t" + "+" + "\t" + barCode + "\n");
-                                bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  "1" +
-                                        "\t" + "-" + "\t" + barCode + "\n");
-                            } else if (plusList[i] == 1 && minusList[i] == 0) {
-                                bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  "1" +
-                                        "\t" + "+" + "\t" + barCode + "\n");
-                                bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  "0" +
-                                        "\t" + "-" + "\t" + barCode + "\n");
-                            }
+                            bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  String.valueOf(plusList[i]) +
+                                    "\t" + "+" + "\t" + barCode + "\n");
+                            bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  String.valueOf(minusList[i]) +
+                                    "\t" + "-" + "\t" + barCode + "\n");
                         }
                     }
                 }
@@ -130,7 +122,22 @@ public class HemiM {
     }
 
     private boolean checkArgs() {
-
+        if (args.getMhapPath().equals("")) {
+            log.error("mhapPath can not be null.");
+            return false;
+        }
+        if (args.getCpgPath().equals("")) {
+            log.error("cpgPath can not be null.");
+            return false;
+        }
+        if (!args.getRegion().equals("") && !args.getBedFile().equals("")) {
+            log.error("Can not input region and bedPath at the same time.");
+            return false;
+        }
+        if (args.getRegion().equals("") && args.getBedFile().equals("")) {
+            log.error("Region and bedPath can not be null at the same time.");
+            return false;
+        }
         return true;
     }
 }
