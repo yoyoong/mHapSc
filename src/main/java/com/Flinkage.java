@@ -32,9 +32,15 @@ public class Flinkage {
 
         // get regionList, from region or bedfile
         if (args.getRegion1() != null && !args.getRegion1().equals("") && args.getRegion2() != null && !args.getRegion2().equals("")) {
-            Region region1 = util.parseRegion(args.getRegion1());    
+            Region region1 = util.parseRegion(args.getRegion1());
+            Region region2 = util.parseRegion(args.getRegion2());
+            Region region = new Region();
+            if (region1.getStart() > region2.getStart()) {
+                region = region1;
+                region1 = region2;
+                region2 = region;
+            }
             regionList.add(region1);
-            Region region2 = util.parseRegion(args.getRegion2());    
             regionList.add(region2);
         } else {
             regionList = util.parseBedFile(args.getBedFile());
@@ -79,15 +85,22 @@ public class Flinkage {
                 }
 
                 // parse the cpg file
-;               List<Integer> cpgPosList1 = util.parseCpgFile(args.getCpgPath(), region1);
-                List<Integer> cpgPosList2 = util.parseCpgFile(args.getCpgPath(), region2);
+                Region region = new Region();
+                region.setChrom(region1.getChrom());
+                region.setStart(region1.getStart());
+                region.setEnd(region2.getEnd());
+                List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 1000);
+;               List<Integer> cpgPosListInRegion1 = util.parseCpgFile(args.getCpgPath(), region1);
+                List<Integer> cpgPosListInRegion2 = util.parseCpgFile(args.getCpgPath(), region2);
 
-                boolean getFlinkageResult = getFlinkage(mHapListMapMerged, cpgPosList1, cpgPosList2, region1, region2, bufferedWriter);
+                boolean getFlinkageResult = getFlinkage(mHapListMapMerged, cpgPosList, cpgPosListInRegion1, cpgPosListInRegion2,
+                        region1, region2, bufferedWriter);
                 if (!getFlinkageResult) {
                     log.error("getFlinkage fail, please check the command.");
                     return;
                 }
             }
+            log.info("Calculate " + regionList.get(i).toHeadString() + " end");
         }
         bufferedWriter.close();
 
@@ -99,7 +112,7 @@ public class Flinkage {
         return true;
     }
 
-    private boolean getFlinkage(TreeMap<String, List<MHapInfo>> mHapListMapMerged,
+    private boolean getFlinkage(TreeMap<String, List<MHapInfo>> mHapListMapMerged, List<Integer> cpgPosList,
                                 List<Integer> cpgPosList1, List<Integer> cpgPosList2, Region region1, Region region2,
                                 BufferedWriter bufferedWriter) throws Exception {
         // 提取查询区域内的甲基化位点列表
@@ -109,15 +122,12 @@ public class Flinkage {
         cpgPosListInRegion.addAll(cpgPosListInRegion1);
         cpgPosListInRegion.addAll(cpgPosListInRegion2);
 
-        // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgMatrix = util.getCpgMatrix(mHapListMapMerged, cpgPosListInRegion);
-
         // calculate the r2Info of erery position
         Integer totalR2Num = cpgPosListInRegion1.size() * cpgPosListInRegion2.size();
         Integer realR2Num = 0;
         for (int i = 0; i < cpgPosListInRegion1.size(); i++) {
             for (int j = cpgPosListInRegion1.size(); j < cpgPosListInRegion.size(); j++) {
-                R2Info r2Info = util.getR2Info(cpgMatrix, i, j, cpgMatrix.length);
+                R2Info r2Info = util.getR2FromMap(mHapListMapMerged, cpgPosList, cpgPosListInRegion.get(i), cpgPosListInRegion.get(j));
                 if (r2Info != null && r2Info.getR2() != Double.NaN && r2Info.getR2() > 0.5 && r2Info.getPvalue() < 0.05) {
                     realR2Num++;
                 }
