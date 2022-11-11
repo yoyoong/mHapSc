@@ -145,6 +145,9 @@ public class MHBDiscovery {
                 continue;
             }
 
+            // get mhap index list map to cpg positions
+            Map<Integer, Map<String, List<MHapInfo>>> mHapIndexListMapToCpg = util.getMhapListMapToCpg(mHapListMap, cpgPosListInRegion);
+
             Integer startIndex = 0; // start mhb position index in cpgPosListInRegion
             Integer endIndex = 0; // end mhb position index in cpgPosListInRegion
             Integer index = 0;
@@ -157,11 +160,17 @@ public class MHBDiscovery {
                         break;
                     }
 
-                    // get r2 and pvalue of index and endIndex
-                    R2Info r2Info = util.getR2FromMap(mHapListMap, cpgPosList, cpgPosListInRegion.get(index), cpgPosListInRegion.get(endIndex));
+                    Integer cpgPos1 = cpgPosListInRegion.get(index);
+                    Integer cpgPos2 = cpgPosListInRegion.get(endIndex);
+                    Map<String, List<MHapInfo>> mHapListMap1 = mHapIndexListMapToCpg.get(cpgPos1);
+                    Map<String, List<MHapInfo>> mHapListMap2 = mHapIndexListMapToCpg.get(cpgPos2);
 
-//                    Integer[][] cpgMatrix = util.getCpgMatrix1(mHapListMap, cpgPosList, cpgPosListInRegion);
-//                    R2Info r2Info = util.getR2Info(cpgMatrix, index, endIndex, cpgMatrix.length);
+                    R2Info r2Info = null;
+                    if (mHapListMap1 != null && mHapListMap1.size() >= 1 &&
+                            mHapListMap2 != null && mHapListMap2.size() >= 1) {
+                        // get r2 and pvalue of index and endIndex
+                        r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2);
+                    }
 //                    System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
 //                            + r2Info.getR2() + "\t" + r2Info.getPvalue());
                     if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
@@ -185,7 +194,7 @@ public class MHBDiscovery {
                 }
             }
 
-            if (endIndex - startIndex >= args.getWindow()) {
+            if (endIndex - startIndex >= args.getWindow() - 1) {
                 MHBInfo mhbInfo = new MHBInfo();
                 mhbInfo.setChrom(region.getChrom());
                 mhbInfo.setStart(cpgPosListInRegion.get(startIndex));

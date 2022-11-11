@@ -26,7 +26,7 @@ Options:
  -cpgPath,--cpgPath <args>       genomic CpG file, gz format and indexed
  -region,--region <args>         one region, in the format of chr:start-end
  -outputDir,--outputDir <args>   output directory, created in advance
- -tag,--tag <args>               prefix of the output file(s)
+ -tag,--tag <args>               prefix of the output file(s) [convert.out]
  -nanopolish,--nanopolish        indicates whether input file is nanopore methylation sequencing file
  ```
 Example of usage:
@@ -73,6 +73,7 @@ Example of usage:
 ```Shell
 java -jar mHapSc-1.0-jar-with-dependencies.jar R2 -mhapPath CRC_hg19.mhap.gz -cpgPath hg19_CpG.gz -region chr1:3229375-3230473 -bcFile CRC_LN.txt -outputDir outputDir -tag CRC_hg19 -longrange -mHapView -bedFile CRC_sc_bulk.bed 
 ```
+
 ## MHBDiscovery
 DNA methylation of adjacent CpG sites can be co-methylated and forms methylation haplotype blocks (MHBs).
 It was original introduced in [S. Guo et al., 2017](https://pubmed.ncbi.nlm.nih.gov/28263317/).
