@@ -65,20 +65,17 @@ public class R2 {
         // parse the barcodefile
         List<String> barcodeList = util.parseBcFile(args.getBcFile());
 
-        // parse the mhap file
-        Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
-
         // parse the cpg file
         List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
 
-        boolean getR2Result = getR2(mHapListMap, cpgPosList);
+        boolean getR2Result = getR2(barcodeList, cpgPosList);
         if (!getR2Result) {
             log.error("getR2 fail, please check the command.");
             return;
         }
 
         if (args.isMhapView()) {
-            boolean getMhapViewResult = getMhapView(mHapListMap, cpgPosList);
+            boolean getMhapViewResult = getMhapView(barcodeList, cpgPosList);
             if (!getMhapViewResult) {
                 log.error("getMhapView fail, please check the command.");
                 return;
@@ -109,7 +106,7 @@ public class R2 {
         return true;
     }
 
-    private boolean getR2(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList) throws Exception {
+    private boolean getR2(List<String> barcodeList, List<Integer> cpgPosList) throws Exception {
         // create the output directory and file
         String r2FileName = args.getTag() + "_" + region.toFileString() + ".cpg_sites_rsquare.txt";
         BufferedWriter r2BufferedWriter = util.createOutputFile(args.getOutputDir(), r2FileName);
@@ -125,18 +122,26 @@ public class R2 {
             longrangeBufferedWriter = util.createOutputFile(args.getOutputDir(), longrangeFileName);
         }
 
+        // parse the mhap file
+        Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFileIndexByBarCodeAndStrand(args.getMhapPath(), barcodeList, args.getBcFile(), region);
+        if (mHapListMap.size() < 1) {
+            return true;
+        }
+
         // get cpg site list in region
         List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
 
-        // calculate the row number
-        Integer rowNum = util.getMhapMapRowNum(mHapListMap);
-
-        // get cpg status matrix in region
-        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
+        // get mhap index list map to cpg positions
+        Map<Integer, Map<String, List<MHapInfo>>> mHapIndexListMapToCpg = util.getMhapListMapToCpg(mHapListMap, cpgPosListInRegion);
 
         for (int i = 0; i < cpgPosListInRegion.size(); i++) {
             for (int j = i + 1; j < cpgPosListInRegion.size(); j++) {
-                R2Info r2Info = util.getR2Info(cpgHpMatInRegion, i, j, rowNum);
+                Integer cpgPos1 = cpgPosListInRegion.get(i);
+                Integer cpgPos2 = cpgPosListInRegion.get(j);
+                Map<String, List<MHapInfo>> mHapListMap1 = mHapIndexListMapToCpg.get(cpgPos1);
+                Map<String, List<MHapInfo>> mHapListMap2 = mHapIndexListMapToCpg.get(cpgPos2);
+
+                R2Info r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2);
                 r2BufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" + cpgPosListInRegion.get(j) + "\t"
                         + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"
                         + String.format("%1.8f" , r2Info.getR2()) + "\t" + r2Info.getPvalue() + "\n");
@@ -149,12 +154,16 @@ public class R2 {
         }
 
         r2BufferedWriter.close();
-        longrangeBufferedWriter.close();
+        if (args.isLongrange()) {
+            longrangeBufferedWriter.close();
+        }
 
         return true;
     }
 
-    private boolean getMhapView(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList) throws Exception {
+    private boolean getMhapView(List<String> barcodeList, List<Integer> cpgPosList) throws Exception {
+        // parse the mhap file
+        Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
 
         // 提取查询区域内的甲基化位点列表
         List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
@@ -163,7 +172,7 @@ public class R2 {
         Integer rowNum = util.getMhapMapRowNum(mHapListMap);
 
         // 甲基化状态矩阵 0-未甲基化 1-甲基化
-        Integer[][] cpgHpMatInRegion = util.getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
+        Integer[][] cpgHpMatInRegion = getCpgHpMat(rowNum, cpgPosListInRegion.size(), cpgPosListInRegion, mHapListMap);
 
         // 按甲基化比率递减排序
         Arrays.sort(cpgHpMatInRegion, new Comparator<Integer[]>() {
@@ -623,5 +632,71 @@ public class R2 {
         // 关闭文档，才能输出
         document.close();
         pdfWriter.close();
+    }
+
+    public Integer[][] getCpgHpMat(Integer rowNum, Integer colNum, List<Integer> cpgPosList, Map<String, List<MHapInfo>> mHapListMap) {
+        Integer[][] cpgHpMatInRegion = new Integer[rowNum][colNum];
+        for (int i = 0; i < cpgPosList.size(); i++) {
+            Iterator<String> iterator1 = mHapListMap.keySet().iterator();
+            Integer row = 0;
+            while (iterator1.hasNext()) {
+                List<MHapInfo> mHapInfoList = mHapListMap.get(iterator1.next());
+
+                // 是否存在正负两条链
+                Boolean plusFlag = false;
+                Boolean minusFlag = false;
+                for (int j = 0; j < mHapInfoList.size(); j++) {
+                    plusFlag = mHapInfoList.get(j).getStrand().equals("+") ? true : plusFlag;
+                    minusFlag = mHapInfoList.get(j).getStrand().equals("-") ? true : minusFlag;
+                }
+                Integer strandCnt = plusFlag && minusFlag ? 2 : 1;// 链数
+
+                for (int j = 0; j < mHapInfoList.size(); j++) {
+                    MHapInfo mHapInfo = mHapInfoList.get(j);
+                    if (cpgPosList.get(i) >= mHapInfo.getStart() && cpgPosList.get(i) <= mHapInfo.getEnd()) {
+                        // 获取某个在区域内的位点在mhap的cpg中的相对位置
+                        Integer pos = util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPosList.get(i)) -
+                                util.indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfo.getStart());
+
+                        if (plusFlag && minusFlag) {
+                            if (mHapInfo.getStrand().equals("+")) {
+                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
+                                    if (i + k - pos < cpgPosList.size()) {
+                                        if (mHapInfo.getCpg().charAt(k) == '0') {
+                                            cpgHpMatInRegion[row][i + k - pos] = 0;
+                                        } else {
+                                            cpgHpMatInRegion[row][i + k - pos] = 1;
+                                        }
+                                    }
+                                }
+                            } else {
+                                for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
+                                    if (i + k - pos < cpgPosList.size()) {
+                                        if (mHapInfo.getCpg().charAt(k) == '0') {
+                                            cpgHpMatInRegion[row + 1][i + k - pos] = 0;
+                                        } else {
+                                            cpgHpMatInRegion[row + 1][i + k - pos] = 1;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            for (int k = pos; k < mHapInfo.getCpg().length(); k++) {
+                                if (i + k - pos < cpgPosList.size()) {
+                                    if (mHapInfo.getCpg().charAt(k) == '0') {
+                                        cpgHpMatInRegion[row][i + k - pos] = 0;
+                                    } else {
+                                        cpgHpMatInRegion[row][i + k - pos] = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                row += strandCnt;
+            }
+        }
+
+        return cpgHpMatInRegion;
     }
 }
