@@ -34,6 +34,126 @@ public class MHBDiscovery {
             return;
         }
 
+        if (args.isQcFlag()) {
+            boolean doQCResult = doQC();
+            if (!doQCResult) {
+                log.error("do QC fail, please check the command.");
+                return;
+            }
+        } else {
+            boolean getMHBResult = getMHB();
+            if (!getMHBResult) {
+                log.error("get MHB fail, please check the command.");
+                return;
+            }
+        }
+
+        log.info("MHBDiscovery end!");
+    }
+
+    private boolean checkArgs() {
+        if (args.getmHapPath().equals("")) {
+            log.error("mhapPath can not be null.");
+            return false;
+        }
+        if (args.getCpgPath().equals("")) {
+            log.error("cpgPath can not be null.");
+            return false;
+        }
+        if (!args.getRegion().equals("") && !args.getBedFile().equals("")) {
+            log.error("Can not input region and bedPath at the same time.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean doQC() throws Exception{
+        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".qcFlag.bed");
+
+        List<Region> regionList = new ArrayList<>();
+        if (args.getRegion() != null && !args.getRegion().equals("")) {
+            Region region = util.parseRegion(args.getRegion());
+            regionList.add(region);
+        } else if (args.getBedFile() != null && !args.getBedFile().equals("")) {
+            regionList = util.parseBedFile(args.getBedFile());
+        }
+
+        // get bcFile
+        List<String> barcodeList = util.parseBcFile(args.getBcFile());
+
+        for (Region region : regionList) {
+            region.setStart(region.getStart() - 1);
+            // parse the mhap file
+            Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFileIndexByBarCodeAndStrand(args.getmHapPath(), barcodeList, args.getBcFile(), region);
+            if (mHapListMap.size() < 1) {
+                continue;
+            }
+
+            // parse the cpg file
+            List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
+            if (cpgPosList.size() < 1) {
+                continue;
+            }
+
+            // get cpg site list in region
+            List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
+            if (cpgPosListInRegion.size() < 1) {
+                continue;
+            }
+
+            // get mhap index list map to cpg positions
+            Map<Integer, Map<String, List<MHapInfo>>> mHapIndexListMapToCpg = util.getMhapListMapToCpg(mHapListMap, cpgPosListInRegion);
+
+            boolean isMHBFlag = true;
+            Integer firstIndex = 0; // start mhb position index in cpgPosListInRegion
+            Integer secondIndex = 0; // end mhb position index in cpgPosListInRegion
+            while (secondIndex < cpgPosListInRegion.size() - 1) {
+                secondIndex++;
+                for (int i = 1; i < args.getWindow(); i++) {
+                    firstIndex = secondIndex - i; // cpg site index in cpgPosListInRegion for loop
+                    if (firstIndex < 0) {
+                        break;
+                    }
+
+                    Integer cpgPos1 = cpgPosListInRegion.get(firstIndex);
+                    Integer cpgPos2 = cpgPosListInRegion.get(secondIndex);
+                    Map<String, List<MHapInfo>> mHapListMap1 = mHapIndexListMapToCpg.get(cpgPos1);
+                    Map<String, List<MHapInfo>> mHapListMap2 = mHapIndexListMapToCpg.get(cpgPos2);
+
+                    R2Info r2Info = null;
+                    if (mHapListMap1 != null && mHapListMap1.size() >= 1 && mHapListMap2 != null && mHapListMap2.size() >= 1) {
+                        // get r2 and pvalue of index and endIndex
+                        r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2);
+                    }
+                    if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
+                        isMHBFlag = false;
+                        if (r2Info == null || r2Info.getR2().isNaN()) {
+                            bufferedWriter.write(region.getChrom() + "\t" + region.getStart() + "\t" + region.getEnd() + "\t" + "no" + "\t"
+                                    + cpgPosListInRegion.get(firstIndex) + "-" + cpgPosListInRegion.get(secondIndex) + " r2 is null or nan!" + "\n");
+                        } else {
+                            bufferedWriter.write(region.getChrom() + "\t" + region.getStart() + "\t" + region.getEnd() + "\t" + "no" + "\t"
+                                    + cpgPosListInRegion.get(firstIndex) + "-" + cpgPosListInRegion.get(secondIndex) + " " + r2Info.getR2() + " " + r2Info.getPvalue() + "\n");
+                        }
+                        break;
+                    }
+                }
+
+                if (!isMHBFlag) {
+                    break;
+                }
+            }
+
+            if(isMHBFlag) {
+                bufferedWriter.write(region.getChrom() + "\t" + region.getStart() + "\t" + region.getEnd() + "\t" + "yes" + "\n");
+            }
+        }
+        bufferedWriter.close();
+
+        return true;
+    }
+
+    private boolean getMHB() throws Exception {
         // get regionList, from region or bedfile
         List<Region> regionList = new ArrayList<>();
         if (args.getRegion() != null && !args.getRegion().equals("")) {
@@ -208,23 +328,6 @@ public class MHBDiscovery {
         }
 
         bufferedWriter.close();
-        log.info("MHBDiscovery end!");
-    }
-
-    private boolean checkArgs() {
-        if (args.getmHapPath().equals("")) {
-            log.error("mhapPath can not be null.");
-            return false;
-        }
-        if (args.getCpgPath().equals("")) {
-            log.error("cpgPath can not be null.");
-            return false;
-        }
-        if (!args.getRegion().equals("") && !args.getBedFile().equals("")) {
-            log.error("Can not input region and bedPath at the same time.");
-            return false;
-        }
-
         return true;
     }
 }

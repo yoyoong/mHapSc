@@ -95,6 +95,8 @@ public class MainTest extends TestCase {
         String arg2 = "CRC_hg19.mhap.gz";
         String arg3 = "-region";
         String arg4 = "chr1:3229375-3230473";
+//        String arg3 = "-bedFile";
+//        String arg4 = "CRC_MHB_non_NC.bed";
         String arg5 = "-cpgPath";
         String arg6 = "hg19_CpG.gz";
 //        String arg7 = "-bcFile";
