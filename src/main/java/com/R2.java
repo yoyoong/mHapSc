@@ -142,13 +142,14 @@ public class R2 {
                 Map<String, List<MHapInfo>> mHapListMap2 = mHapIndexListMapToCpg.get(cpgPos2);
 
                 R2Info r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2);
-                r2BufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" + cpgPosListInRegion.get(j) + "\t"
-                        + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"
-                        + String.format("%1.8f" , r2Info.getR2()) + "\t" + r2Info.getPvalue() + "\n");
-                if (args.isLongrange()) {
-                    longrangeBufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t"
-                            + (cpgPosListInRegion.get(i) + 1) + "\t" + region.getChrom() + ":" + cpgPosListInRegion.get(j)
-                            + "-" + (cpgPosListInRegion.get(j) + 1) + "," + String.format("%1.8f" , r2Info.getR2()) + "\n");
+                if (r2Info != null) {
+                    r2BufferedWriter.write(region.getChrom() + "\t" + cpgPos1 + "\t" + cpgPos2 + "\t"
+                            + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"
+                            + String.format("%1.8f" , r2Info.getR2()) + "\t" + r2Info.getPvalue() + "\n");
+                    if (args.isLongrange()) {
+                        longrangeBufferedWriter.write(region.getChrom() + "\t" + cpgPos1 + "\t" + (cpgPos1 + 1) + "\t"
+                                + region.getChrom() + ":" + cpgPos2 + "-" + (cpgPos2 + 1) + "," + String.format("%1.8f" , r2Info.getR2()) + "\n");
+                    }
                 }
             }
         }
