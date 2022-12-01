@@ -108,21 +108,18 @@ public class Convert {
             if (cpgPostList == null || cpgPostList.size() < 1) {
                 continue;
             }
-            lastChrom = thisChrom;
 
             // check this readname whether equal with last readname
             thisBarcode = nanopolishInfo.getReadName();
             if (!lastBarcode.equals("") && !thisBarcode.equals(lastBarcode)) {
                 extendFlag = false;
             }
-            lastBarcode = thisBarcode;
 
             // check this strand whether equal with last strand
             thisStrand = nanopolishInfo.getStrand();
             if (!lastStrand.equals("") && !thisStrand.equals(lastStrand)) {
                 extendFlag = false;
             }
-            lastStrand = thisStrand;
 
             // check this cpg position whether follow with nanopolishList the last cpg position
             Integer thisStartCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, nanopolishInfo.getStart());
@@ -138,8 +135,8 @@ public class Convert {
                 if (nanopolishList.size() > 0) {
 //                    log.info(lastChrom + "\t" + nanopolishList.get(0).getStart()+ "\t" + nanopolishList.get(nanopolishList.size() - 1).getStart() + "\t" +
 //                            "\t" + cpgStr + "\t" + lastStrand + "\t" + "1" + "\t" + lastBarcode + "\n");
-                    bufferedWriter.write(lastChrom + "\t" + nanopolishList.get(0).getStart()+ "\t" + nanopolishList.get(nanopolishList.size() - 1).getStart() + "\t" +
-                            "\t" + cpgStr + "\t" + lastStrand + "\t" + "1" + "\t" + lastBarcode + "\n");
+                    bufferedWriter.write(lastChrom + "\t" + nanopolishList.get(0).getStart()+ "\t" + nanopolishList.get(nanopolishList.size() - 1).getStart() +
+                            "\t" + cpgStr + "\t" + "1" + "\t" + lastStrand + "\t" + lastBarcode + "\n");
                 }
                 nanopolishList = new ArrayList<>();
                 cpgStr = "";
@@ -171,11 +168,15 @@ public class Convert {
                     nanopolishList.add(nanopolishInfo);
                 }
             }
+
+            lastChrom = thisChrom;
+            lastBarcode = thisBarcode;
+            lastStrand = thisStrand;
         }
 
         if (nanopolishList.size() > 0) { // print the last nanopolishList to mhap file
-            bufferedWriter.write(lastChrom + "\t" + nanopolishList.get(0).getStart()+ "\t" + nanopolishList.get(nanopolishList.size() - 1).getStart() + "\t" +
-                    "\t" + cpgStr + "\t" + lastStrand + "\t" + "1" + "\t" + lastBarcode + "\n");
+            bufferedWriter.write(lastChrom + "\t" + nanopolishList.get(0).getStart()+ "\t" + nanopolishList.get(nanopolishList.size() - 1).getStart() +
+                    "\t" + cpgStr + "\t" + "1" + "\t" + lastStrand + "\t" + lastBarcode + "\n");
         }
 
         bufferedWriter.close();
@@ -248,13 +249,13 @@ public class Convert {
                 if (lastNuc.equals("C")) {
 //                System.out.println(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos() + "    " +scBedList.get(i + expandLength - 1).getPos() + "\t" +
 //                        "\t" + cpg + "\t" + "+" + "\t" + "1" + "\t" + barCode);
-                    bufferedWriter.write(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos() + "\t" +scBedList.get(i + expandLength - 1).getPos() + "\t" +
-                            "\t" + cpg + "\t" + "+" + "\t" + "1" + "\t" + barCode + "\n");
+                    bufferedWriter.write(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos() + "\t" +scBedList.get(i + expandLength - 1).getPos() +
+                            "\t" + cpg + "\t" + "\t" + "1" + "+" + "\t" + barCode + "\n");
                 } else {
 //                System.out.println(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos() + "    " +scBedList.get(i + expandLength - 1).getPos() + "\t" +
 //                        "\t" + cpg + "\t" + "+" + "\t" + "1" + "\t" + barCode);
-                    bufferedWriter.write(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos()+ "\t" + scBedList.get(i + expandLength - 1).getPos() + "\t" +
-                            "\t" + cpg + "\t" + "-" + "\t" + "1" + "\t" + barCode + "\n");
+                    bufferedWriter.write(scBedList.get(0).getChrom() + "\t" + scBedList.get(i).getPos()+ "\t" + scBedList.get(i + expandLength - 1).getPos() +
+                            "\t" + cpg + "\t" + "1" + "\t" + "-" + "\t" + barCode + "\n");
                 }
 
                 i += expandLength - 1;

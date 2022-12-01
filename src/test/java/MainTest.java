@@ -9,7 +9,7 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "convert";
         String arg1 = "-inputPath";
-        String arg2 = "methylation-log.tsv.gz";
+        String arg2 = "H103_cellline_methylationcall.tsv.gz";
         String arg3 = "-cpgPath";
         String arg4 = "hg38_CpG.gz";
         String arg5 = "-outputDir";
@@ -94,13 +94,13 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "MHBDiscovery";
         String arg1 = "-mhapPath";
-        String arg2 = "CRC_hg19.mhap.gz";
-        String arg3 = "-region";
-        String arg4 = "chrX:153715286-153715374";
+        String arg2 = "H103_cellline_methylationcall.mhap.gz";
+//        String arg3 = "-region";
+//        String arg4 = "chrX:153715286-153715374";
 //        String arg3 = "-bedFile";
 //        String arg4 = "CRC_MHB_non_NC.bed";
         String arg5 = "-cpgPath";
-        String arg6 = "hg19_CpG.gz";
+        String arg6 = "hg38_CpG.gz";
 //        String arg7 = "-bcFile";
 //        String arg8 = "CRC_LN.txt";
         String arg9 = "-window";
@@ -113,8 +113,9 @@ public class MainTest extends TestCase {
         String arg16 = "outputDir";
         String arg17 = "-tag";
         String arg18 = "CRC_hg19_MHB";
-        String arg19 = "-qc";
-        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
+//        String arg19 = "-qc";
+        String[] args = {arg0, arg1, arg2, arg5, arg6, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18};
+        //String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
         //String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19};
 
         String argsStr = "";

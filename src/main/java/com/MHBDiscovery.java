@@ -245,23 +245,35 @@ public class MHBDiscovery {
         BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".txt");
 
         Map<String, String> mhbInfoListMap = new HashMap<>();
+
+        // 打印处理进度
+        long totalCnt = regionList.size();
+        long completeCnt= 0l;
         for (Region region : regionList) {
+            completeCnt++;
+            if (completeCnt % (totalCnt / 100) == 0) {
+                int percent = (int) Math.round(Double.valueOf(completeCnt) * 100 / totalCnt );
+                log.info("Process complete " + percent + "%.");
+            }
             // parse the mhap file
             //List<MHapInfo> mHapInfoList = util.parseMhapFile(args.getmHapPath(), region, "both", true);
             Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFileIndexByBarCodeAndStrand(args.getmHapPath(), barcodeList, args.getBcFile(), region);
             if (mHapListMap.size() < 1) {
+                //log.info("mHap is null in region:" + region.toHeadString());
                 continue;
             }
 
             // parse the cpg file
             List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
             if (cpgPosList.size() < 1) {
+                //log.info("cpg pos is null in region:" + region.toHeadString());
                 continue;
             }
 
             // get cpg site list in region
             List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
             if (cpgPosListInRegion.size() < 1) {
+                //log.info("cpg pos is null in region:" + region.toHeadString());
                 continue;
             }
 
@@ -324,7 +336,7 @@ public class MHBDiscovery {
                     bufferedWriter.write(mhbInfo.getChrom() + "\t" + mhbInfo.getStart() + "\t" + mhbInfo.getEnd() + "\n");
                 }
             }
-            log.info("Get MHB from region: " + region.toHeadString() + " end!");
+            // log.info("Get MHB from region: " + region.toHeadString() + " end!");
         }
 
         bufferedWriter.close();
