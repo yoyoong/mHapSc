@@ -108,6 +108,10 @@ public class Convert {
             if (cpgPostList == null || cpgPostList.size() < 1) {
                 continue;
             }
+            // filter the position do not exist in cpg posstion reference
+            if (util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, nanopolishInfo.getStart()) < 0) {
+                continue;
+            }
 
             // check this readname whether equal with last readname
             thisBarcode = nanopolishInfo.getReadName();

@@ -9,7 +9,7 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "convert";
         String arg1 = "-inputPath";
-        String arg2 = "H103_cellline_methylationcall.tsv.gz";
+        String arg2 = "GSM5570292_GM12878_methylation_calls.tsv.gz";
         String arg3 = "-cpgPath";
         String arg4 = "hg38_CpG.gz";
         String arg5 = "-outputDir";
