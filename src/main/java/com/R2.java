@@ -67,6 +67,10 @@ public class R2 {
 
         // parse the cpg file
         List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 2000);
+        if (cpgPosList.size() < 1) {
+            log.info("Have no cpg postion in region:" + region.toHeadString());
+            return;
+        }
 
         boolean getR2Result = getR2(barcodeList, cpgPosList);
         if (!getR2Result) {
@@ -124,12 +128,17 @@ public class R2 {
 
         // parse the mhap file
         Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFileIndexByBarCodeAndStrand(args.getMhapPath(), barcodeList, args.getBcFile(), region);
-        if (mHapListMap.size() < 1) {
+        if (cpgPosList.size() < 1) {
+            log.info("Have no mhap list in region:" + region.toHeadString());
             return true;
         }
 
         // get cpg site list in region
         List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
+        if (cpgPosListInRegion.size() < 1) {
+            log.info("Have no cpg postion in region:" + region.toHeadString());
+            return true;
+        }
 
         // get mhap index list map to cpg positions
         Map<Integer, Map<String, List<MHapInfo>>> mHapIndexListMapToCpg = util.getMhapListMapToCpg(mHapListMap, cpgPosListInRegion);
@@ -165,9 +174,17 @@ public class R2 {
     private boolean getMhapView(List<String> barcodeList, List<Integer> cpgPosList) throws Exception {
         // parse the mhap file
         Map<String, List<MHapInfo>> mHapListMap = util.parseMhapFile(args.getMhapPath(), barcodeList, args.getBcFile(), region);
+        if (cpgPosList.size() < 1) {
+            log.info("Have no mhap list in region:" + region.toHeadString());
+            return true;
+        }
 
         // 提取查询区域内的甲基化位点列表
         List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
+        if (cpgPosListInRegion.size() < 1) {
+            log.info("Have no cpg postion in region:" + region.toHeadString());
+            return true;
+        }
 
         // 计算行数
         Integer rowNum = util.getMhapMapRowNum(mHapListMap);
