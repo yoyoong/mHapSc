@@ -51,8 +51,8 @@ public class Flinkage {
 
         // create the output directory
         File outputDir = new File(args.getOutputDir());
-        if (!outputDir.exists()){
-            if (!outputDir.mkdirs()){
+        if (!outputDir.exists()) {
+            if (!outputDir.mkdirs()) {
                 log.error("create" + outputDir.getAbsolutePath() + "fail");
                 return;
             }
@@ -62,7 +62,9 @@ public class Flinkage {
         BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".longrange.txt");
 
         for (int i = 0; i < regionList.size(); i++) {
+            //log.info("Calculate " + regionList.get(i).toHeadString() + " start!");
             for (int j = i + 1; j < regionList.size(); j++) {
+                //log.info("Calculate " + regionList.get(i).toHeadString()  + " with " + regionList.get(j).toHeadString() + " start!");
                 Region region1 = regionList.get(i);
                 Region region2 = regionList.get(j);
 
@@ -90,8 +92,20 @@ public class Flinkage {
                 region.setStart(region1.getStart());
                 region.setEnd(region2.getEnd());
                 List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, 1000);
+                if (cpgPosList.size() < 1) {
+                    log.info("Cpg pos list in " + region.toHeadString() + " is null!");
+                    continue;
+                }
 ;               List<Integer> cpgPosListInRegion1 = util.parseCpgFile(args.getCpgPath(), region1);
+                if (cpgPosList.size() < 1) {
+                    log.info("Cpg pos list in " + region1.toHeadString() + " is null!");
+                    continue;
+                }
                 List<Integer> cpgPosListInRegion2 = util.parseCpgFile(args.getCpgPath(), region2);
+                if (cpgPosList.size() < 1) {
+                    log.info("Cpg pos list in " + region2.toHeadString() + " is null!");
+                    continue;
+                }
 
                 boolean getFlinkageResult = getFlinkage(mHapListMapMerged, cpgPosList, cpgPosListInRegion1, cpgPosListInRegion2,
                         region1, region2, bufferedWriter);
@@ -99,8 +113,9 @@ public class Flinkage {
                     log.error("getFlinkage fail, please check the command.");
                     return;
                 }
+                //log.info("Calculate " + regionList.get(i).toHeadString()  + " with " + regionList.get(j).toHeadString() + " end!");
             }
-            log.info("Calculate " + regionList.get(i).toHeadString() + " end");
+            log.info("Calculate " + regionList.get(i).toHeadString() + " end!");
         }
         bufferedWriter.close();
 
@@ -117,7 +132,7 @@ public class Flinkage {
             return false;
         }
         if (args.getBedFile().equals("")) {
-            if (!(args.getRegion1().equals("") && args.getRegion2().equals(""))) {
+            if (args.getRegion1().equals("") || args.getRegion2().equals("")) {
                 log.error("Region1 and region2 should be input at the same time.");
                 return false;
             }

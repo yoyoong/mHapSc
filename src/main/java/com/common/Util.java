@@ -398,23 +398,28 @@ public class Util {
                     cpgPos2ExistIndex = i;
                 }
             }
-            if (cpgPos1Flag && cpgPos2Flag) {
-                MHapInfo mHapInfoInCpgPos1 = mHapInfoList.get(cpgPos1ExistIndex);
-                MHapInfo mHapInfoInCpgPos2 = mHapInfoList.get(cpgPos2ExistIndex);
-                Integer pos1 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos1)
-                        - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos1.getStart());
-                Integer pos2 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos2)
-                        - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos2.getStart());
-                if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
-                    N00 += 1;
-                } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
-                    N01 += 1;
-                } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
-                    N10 += 1;
-                } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
-                    N11 += 1;
+            try {
+                if (cpgPos1Flag && cpgPos2Flag) {
+                    MHapInfo mHapInfoInCpgPos1 = mHapInfoList.get(cpgPos1ExistIndex);
+                    MHapInfo mHapInfoInCpgPos2 = mHapInfoList.get(cpgPos2ExistIndex);
+                    Integer pos1 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos1)
+                            - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos1.getStart());
+                    Integer pos2 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos2)
+                            - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos2.getStart());
+                    if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
+                        N00 += 1;
+                    } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
+                        N01 += 1;
+                    } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
+                        N10 += 1;
+                    } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
+                        N11 += 1;
+                    }
                 }
+            } catch (Exception e) {
+                log.info("Error in " + cpgPos1 + "-" + cpgPos2);
             }
+
         }
 
 //        if ((N00 + N01 + N10 + N11) < r2Cov) {

@@ -72,7 +72,7 @@ public class Main {
         Option option2 = OptionBuilder.withArgName("com/args").withLongOpt("cpgPath").hasArg().withDescription(cpgPath_Description).create("cpgPath");
         Option option3 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").hasArg().withDescription(outputDir_Description).create("outputDir");
         Option option4 = OptionBuilder.withArgName("com/args").withLongOpt("tag").hasArg().withDescription(tag_Description).create("tag");
-        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("nanopolish").withDescription(tag_Description).create("nanopolish");
+        Option option5 = OptionBuilder.withArgName("com/args").withLongOpt("nanopolish").withDescription(nanopolish_Description).create("nanopolish");
         options.addOption(option0).addOption(option1).addOption(option2).addOption(option3).addOption(option4).addOption(option5);
 
         BasicParser parser = new BasicParser();
