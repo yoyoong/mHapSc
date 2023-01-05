@@ -124,7 +124,7 @@ public class MHBDiscovery {
                     R2Info r2Info = null;
                     if (mHapListMap1 != null && mHapListMap1.size() >= 1 && mHapListMap2 != null && mHapListMap2.size() >= 1) {
                         // get r2 and pvalue of index and endIndex
-                        r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2);
+                        r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2, 0);
                     }
                     if (r2Info == null || r2Info.getR2() < args.getR2() || r2Info.getPvalue() > args.getPvalue()) {
                         isMHBFlag = false;
@@ -301,7 +301,7 @@ public class MHBDiscovery {
                     if (mHapListMap1 != null && mHapListMap1.size() >= 1 &&
                             mHapListMap2 != null && mHapListMap2.size() >= 1) {
                         // get r2 and pvalue of index and endIndex
-                        r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2);
+                        r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2, 0);
                     }
 //                    System.out.println(cpgPosListInRegion.get(index) + "\t" + cpgPosListInRegion.get(endIndex) + "\t"
 //                            + r2Info.getR2() + "\t" + r2Info.getPvalue());

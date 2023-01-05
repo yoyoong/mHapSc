@@ -218,8 +218,10 @@ public class MainTest extends TestCase {
         String arg14 = "flinkage";
         String arg15 = "-limit";
         String arg16 = "20000000";
+        String arg17 = "-r2Cov";
+        String arg18 = "5";
         //String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16};
-        String[] args = {arg0, arg1, arg2, arg3, arg4, arg7, arg8, arg11, arg12, arg13, arg14, arg15, arg16};
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg7, arg8, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18};
 
         System.out.println("Work direqtory: " + System.getProperty("user.dir"));
         String argsStr = "";

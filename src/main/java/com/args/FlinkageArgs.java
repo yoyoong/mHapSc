@@ -13,6 +13,7 @@ public class FlinkageArgs implements Serializable {
     public String outputDir = ""; // output directory, created in advance
     public String tag = "flinkage.out"; // prefix of the output files
     public Integer limit = 20000000; // the max length to calculate
+    public Integer r2Cov = 5; // minimal number of reads that cover two CpGs for R2 calculation [5]
 
     public String getMhapPath() {
         return mhapPath;
@@ -84,6 +85,14 @@ public class FlinkageArgs implements Serializable {
 
     public void setLimit(Integer limit) {
         this.limit = limit;
+    }
+
+    public Integer getR2Cov() {
+        return r2Cov;
+    }
+
+    public void setR2Cov(Integer r2Cov) {
+        this.r2Cov = r2Cov;
     }
 
 }

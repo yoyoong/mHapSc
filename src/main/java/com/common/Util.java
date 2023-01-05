@@ -362,7 +362,8 @@ public class Util {
         return mHapIndexMapToCpg;
     }
 
-    public R2Info getR2FromMap(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList, Integer cpgPos1, Integer cpgPos2) {
+    public R2Info getR2FromMap(Map<String, List<MHapInfo>> mHapListMap, List<Integer> cpgPosList,
+                               Integer cpgPos1, Integer cpgPos2, Integer r2Cov) {
         R2Info r2Info = new R2Info();
         Integer N00 = 0;
         Integer N01 = 0;
@@ -422,9 +423,9 @@ public class Util {
 
         }
 
-//        if ((N00 + N01 + N10 + N11) < r2Cov) {
-//            return null;
-//        }
+        if ((N00 + N01 + N10 + N11) < r2Cov) {
+            return null;
+        }
 
         /// 计算r2
         Double r2 = 0.0;

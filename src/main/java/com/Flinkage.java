@@ -157,13 +157,16 @@ public class Flinkage {
         cpgPosListInRegion.addAll(cpgPosListInRegion2);
 
         // calculate the r2Info of erery position
-        Integer totalR2Num = cpgPosListInRegion1.size() * cpgPosListInRegion2.size();
+        Integer totalR2Num = 0;
         Integer realR2Num = 0;
         for (int i = 0; i < cpgPosListInRegion1.size(); i++) {
             for (int j = cpgPosListInRegion1.size(); j < cpgPosListInRegion.size(); j++) {
-                R2Info r2Info = util.getR2FromMap(mHapListMapMerged, cpgPosList, cpgPosListInRegion.get(i), cpgPosListInRegion.get(j));
-                if (r2Info != null && r2Info.getR2() != Double.NaN && r2Info.getR2() > 0.5 && r2Info.getPvalue() < 0.05) {
-                    realR2Num++;
+                R2Info r2Info = util.getR2FromMap(mHapListMapMerged, cpgPosList, cpgPosListInRegion.get(i), cpgPosListInRegion.get(j), args.getR2Cov());
+                if (r2Info != null) {
+                    totalR2Num++;
+                    if (r2Info.getR2() != Double.NaN && r2Info.getR2() > 0.5 && r2Info.getPvalue() < 0.05) {
+                        realR2Num++;
+                    }
                 }
 //                bufferedWriter.write(region1.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" + cpgPosListInRegion.get(j) + "\t"
 //                        + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"

@@ -150,7 +150,7 @@ public class R2 {
                 Map<String, List<MHapInfo>> mHapListMap1 = mHapIndexListMapToCpg.get(cpgPos1);
                 Map<String, List<MHapInfo>> mHapListMap2 = mHapIndexListMapToCpg.get(cpgPos2);
 
-                R2Info r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2);
+                R2Info r2Info = util.getR2FromMap(mHapListMap1, cpgPosList, cpgPos1, cpgPos2, 0);
                 if (r2Info != null) {
                     r2BufferedWriter.write(region.getChrom() + "\t" + cpgPos1 + "\t" + cpgPos2 + "\t"
                             + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"

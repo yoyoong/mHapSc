@@ -406,7 +406,8 @@ public class Main {
         String bedFile_Description = "a bed file";
         String outputDir_Description = "output directory, created in advance";
         String tag_Description = "prefix of the output file(s)";
-        String limit_Description = "limit)";
+        String limit_Description = "the max length to calculate";
+        String r2Cov_Description = "minimal number of reads that cover two CpGs for R2 calculation";
 
         Options options = new Options();
         Option option0 = OptionBuilder.withLongOpt("help").withDescription("help").create("h");
@@ -419,8 +420,9 @@ public class Main {
         Option option7 = OptionBuilder.withArgName("com/args").withLongOpt("outputDir").hasArg().withDescription(outputDir_Description).create("outputDir");
         Option option8 = OptionBuilder.withArgName("com/args").withLongOpt("tag").hasArg().withDescription(tag_Description).create("tag");
         Option option9 = OptionBuilder.withArgName("com/args").withLongOpt("limit").hasArg().withDescription(limit_Description).create("limit");
+        Option option10 = OptionBuilder.withArgName("com/args").withLongOpt("r2Cov").hasArg().withDescription(r2Cov_Description).create("r2Cov");
         options.addOption(option0).addOption(option1).addOption(option2).addOption(option3).addOption(option4).addOption(option5).
-                addOption(option6).addOption(option7).addOption(option8).addOption(option9);
+                addOption(option6).addOption(option7).addOption(option8).addOption(option9).addOption(option10);
 
         BasicParser parser = new BasicParser();
         FlinkageArgs flinkageMArgs = new FlinkageArgs();
@@ -450,6 +452,9 @@ public class Main {
                 flinkageMArgs.setTag(commandLine.getOptionValue("tag"));
                 if (commandLine.hasOption("limit")) {
                     flinkageMArgs.setLimit(Integer.valueOf(commandLine.getOptionValue("limit")));
+                }
+                if (commandLine.hasOption("r2Cov")) {
+                    flinkageMArgs.setR2Cov(Integer.valueOf(commandLine.getOptionValue("r2Cov")));
                 }
             }
         } else {
