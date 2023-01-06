@@ -173,9 +173,11 @@ public class Flinkage {
 //                        + String.format("%1.8f" , r2Info.getR2()) + "\t" + r2Info.getPvalue() + "\n");
             }
         }
-        bufferedWriter.write(region1.getChrom() + "\t" + region1.getStart() + "\t" + region1.getEnd() + "\t"
-                + region2.getChrom() + ":" + region2.getStart() + "-" + region2.getEnd() + "\t" + cpgPosListInRegion1.size() + "\t"
-                + cpgPosListInRegion2.size() + "\t" + totalR2Num + "\t" + realR2Num + "\n");
+        if (realR2Num > 0) {
+            bufferedWriter.write(region1.getChrom() + "\t" + region1.getStart() + "\t" + region1.getEnd() + "\t"
+                    + region2.getChrom() + ":" + region2.getStart() + "-" + region2.getEnd() + "\t" + cpgPosListInRegion1.size() + "\t"
+                    + cpgPosListInRegion2.size() + "\t" + totalR2Num + "\t" + realR2Num + "\n");
+        }
 
         return true;
     }
