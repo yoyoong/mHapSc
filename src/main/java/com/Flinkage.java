@@ -67,6 +67,9 @@ public class Flinkage {
                 //log.info("Calculate " + regionList.get(i).toHeadString()  + " with " + regionList.get(j).toHeadString() + " start!");
                 Region region1 = regionList.get(i);
                 Region region2 = regionList.get(j);
+                if (region2.getStart() - region1.getEnd() > args.getLimit()) {
+                    continue;
+                }
 
                 TreeMap<String, List<MHapInfo>> mHapListMap1 = util.parseMhapFileIndexByBarCodeAndStrand(args.getMhapPath(), barcodeList,
                         args.getBcFile(), region1);
@@ -160,12 +163,10 @@ public class Flinkage {
         Integer totalR2Num = 0;
         Integer realR2Num = 0;
         for (int i = 0; i < cpgPosListInRegion1.size(); i++) {
+//            log.info("Calculate " + cpgPosListInRegion1.get(i) + " start!");
             for (int j = cpgPosListInRegion1.size(); j < cpgPosListInRegion.size(); j++) {
                 Integer cpgPos1 = cpgPosListInRegion.get(i);
                 Integer cpgPos2 = cpgPosListInRegion.get(j);
-                if (cpgPos2 - cpgPos1 > args.getLimit()) {
-                    break;
-                }
                 R2Info r2Info = util.getR2FromMap(mHapListMapMerged, cpgPosList, cpgPos1, cpgPos2, args.getR2Cov());
                 if (r2Info != null) {
                     totalR2Num++;
@@ -177,6 +178,7 @@ public class Flinkage {
 //                        + r2Info.getN00() + "\t" + r2Info.getN01() + "\t" + r2Info.getN10() + "\t"  + r2Info.getN11() + "\t"
 //                        + String.format("%1.8f" , r2Info.getR2()) + "\t" + r2Info.getPvalue() + "\n");
             }
+//            log.info("Calculate " + cpgPosListInRegion1.get(i) + " end!");
         }
         if (realR2Num > 0) {
             bufferedWriter.write(region1.getChrom() + "\t" + region1.getStart() + "\t" + region1.getEnd() + "\t"
