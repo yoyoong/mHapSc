@@ -307,7 +307,7 @@ public class Util {
                 int pos = cpgPosList.indexOf(mHapInfo.getStart());
                 int pos1 = cpgPosList.indexOf(cpgStart);
                 int pos2 = cpgPosList.indexOf(cpgEnd);
-                cpg = cpg.substring(pos1 - pos, pos2 - pos);
+                cpg = cpg.substring(pos1 - pos, pos2 - pos + 1);
             }
         } else { // mhap.start在region.start右边
             if (mHapInfo.getEnd() > cpgEnd) { // mhap.end在region.end右边
@@ -399,26 +399,22 @@ public class Util {
                     cpgPos2ExistIndex = i;
                 }
             }
-            try {
-                if (cpgPos1Flag && cpgPos2Flag) {
-                    MHapInfo mHapInfoInCpgPos1 = mHapInfoList.get(cpgPos1ExistIndex);
-                    MHapInfo mHapInfoInCpgPos2 = mHapInfoList.get(cpgPos2ExistIndex);
-                    Integer pos1 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos1)
-                            - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos1.getStart());
-                    Integer pos2 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos2)
-                            - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos2.getStart());
-                    if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
-                        N00 += 1;
-                    } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
-                        N01 += 1;
-                    } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
-                        N10 += 1;
-                    } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
-                        N11 += 1;
-                    }
+            if (cpgPos1Flag && cpgPos2Flag) {
+                MHapInfo mHapInfoInCpgPos1 = mHapInfoList.get(cpgPos1ExistIndex);
+                MHapInfo mHapInfoInCpgPos2 = mHapInfoList.get(cpgPos2ExistIndex);
+                Integer pos1 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos1)
+                        - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos1.getStart());
+                Integer pos2 = indexOfList(cpgPosList, 0, cpgPosList.size() - 1, cpgPos2)
+                        - indexOfList(cpgPosList, 0, cpgPosList.size() - 1, mHapInfoInCpgPos2.getStart());
+                if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
+                    N00 += 1;
+                } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '0' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
+                    N01 += 1;
+                } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '0') {
+                    N10 += 1;
+                } else if (mHapInfoInCpgPos1.getCpg().charAt(pos1) == '1' && mHapInfoInCpgPos2.getCpg().charAt(pos2) == '1') {
+                    N11 += 1;
                 }
-            } catch (Exception e) {
-                log.info("Error in " + cpgPos1 + "-" + cpgPos2);
             }
 
         }

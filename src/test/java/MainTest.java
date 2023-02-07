@@ -34,11 +34,11 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "tanghulu";
         String arg1 = "-mhapPath";
-        String arg2 = "GSM5570296_tcell_t0.mhap.gz";
+        String arg2 = "/sibcb2/bioinformatics2/liaoxiqi/mhapSC/data/CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
-        String arg4 = "hg38_CpG.gz";
+        String arg4 = "/sibcb1/bioinformatics/dataupload/iGenome/CpGs/hg19/hg19_CpG.gz";
         String arg5 = "-region";
-        String arg6 = "chr5:157143579-157143704";
+        String arg6 = "chr10:711569-711748";
         String arg7 = "-outputDir";
         String arg8 = "outputDir";
         String arg9 = "-tag";

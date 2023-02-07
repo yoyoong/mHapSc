@@ -152,21 +152,19 @@ public class Flinkage {
     private boolean getFlinkage(TreeMap<String, List<MHapInfo>> mHapListMapMerged, List<Integer> cpgPosList,
                                 List<Integer> cpgPosList1, List<Integer> cpgPosList2, Region region1, Region region2,
                                 BufferedWriter bufferedWriter) throws Exception {
-        // 提取查询区域内的甲基化位点列表
-        List<Integer> cpgPosListInRegion1 = util.getcpgPosListInRegion(cpgPosList1, region1);
-        List<Integer> cpgPosListInRegion2 = util.getcpgPosListInRegion(cpgPosList2, region2);
-        List<Integer> cpgPosListInRegion = new ArrayList<>();
-        cpgPosListInRegion.addAll(cpgPosListInRegion1);
-        cpgPosListInRegion.addAll(cpgPosListInRegion2);
+        // 合并两个甲基化位点列表
+        List<Integer> cpgPosListMerged = new ArrayList<>();
+        cpgPosListMerged.addAll(cpgPosList1);
+        cpgPosListMerged.addAll(cpgPosList2);
 
         // calculate the r2Info of erery position
         Integer totalR2Num = 0;
         Integer realR2Num = 0;
-        for (int i = 0; i < cpgPosListInRegion1.size(); i++) {
+        for (int i = 0; i < cpgPosList1.size(); i++) {
 //            log.info("Calculate " + cpgPosListInRegion1.get(i) + " start!");
-            for (int j = cpgPosListInRegion1.size(); j < cpgPosListInRegion.size(); j++) {
-                Integer cpgPos1 = cpgPosListInRegion.get(i);
-                Integer cpgPos2 = cpgPosListInRegion.get(j);
+            for (int j = cpgPosList1.size(); j < cpgPosList1.size(); j++) {
+                Integer cpgPos1 = cpgPosListMerged.get(i);
+                Integer cpgPos2 = cpgPosListMerged.get(j);
                 R2Info r2Info = util.getR2FromMap(mHapListMapMerged, cpgPosList, cpgPos1, cpgPos2, args.getR2Cov());
                 if (r2Info != null) {
                     totalR2Num++;
@@ -182,8 +180,8 @@ public class Flinkage {
         }
         if (realR2Num > 0) {
             bufferedWriter.write(region1.getChrom() + "\t" + region1.getStart() + "\t" + region1.getEnd() + "\t"
-                    + region2.getChrom() + ":" + region2.getStart() + "-" + region2.getEnd() + "\t" + cpgPosListInRegion1.size() + "\t"
-                    + cpgPosListInRegion2.size() + "\t" + totalR2Num + "\t" + realR2Num + "\n");
+                    + region2.getChrom() + ":" + region2.getStart() + "-" + region2.getEnd() + "\t" + cpgPosList1.size() + "\t"
+                    + cpgPosList2.size() + "\t" + totalR2Num + "\t" + realR2Num + "\n");
         }
 
         return true;
