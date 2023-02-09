@@ -162,7 +162,7 @@ public class Flinkage {
         Integer realR2Num = 0;
         for (int i = 0; i < cpgPosList1.size(); i++) {
 //            log.info("Calculate " + cpgPosListInRegion1.get(i) + " start!");
-            for (int j = cpgPosList1.size(); j < cpgPosList1.size(); j++) {
+            for (int j = cpgPosList1.size(); j < cpgPosListMerged.size(); j++) {
                 Integer cpgPos1 = cpgPosListMerged.get(i);
                 Integer cpgPos2 = cpgPosListMerged.get(j);
                 R2Info r2Info = util.getR2FromMap(mHapListMapMerged, cpgPosList, cpgPos1, cpgPos2, args.getR2Cov());
