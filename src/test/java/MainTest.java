@@ -232,4 +232,48 @@ public class MainTest extends TestCase {
 
         main.main(args);
     }
+
+    @Test
+    public void test_stat() throws Exception {
+        Main main = new Main();
+        String arg0 = "stat";
+        String arg1 = "-metrics";
+        String arg2 = "MM R2 PDR CHALM MHL MCR MBS Entropy";
+        String arg3 = "-mhapPath";
+        String arg4 = "CRC_hg19.mhap.gz";
+        String arg5 = "-cpgPath";
+        String arg6 = "hg19_CpG.gz";
+//        String arg7 = "-region";
+//        String arg8 = "chr1:566520-566816";
+        String arg7 = "-bedPath";
+        String arg8 = "CRC_MHB.bed";
+        String arg9 = "-bcFile";
+        String arg10 = "";
+        String arg11 = "-outputFile";
+        String arg12 = "outStat.tsv";
+        String arg13 = "-minK";
+        String arg14 = "1";
+        String arg15 = "-maxK";
+        String arg16 = "10";
+        String arg17 = "-K";
+        String arg18 = "4";
+        String arg19 = "-strand";
+        String arg20 = "both";
+        String arg21 = "-r2Cov";
+        String arg22 = "20";
+
+        // lack of bcFile and strand
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg21, arg22};
+        // all parameter
+        // String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22};
+
+        System.out.println("Work direqtory: " + System.getProperty("user.dir"));
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
+        main.main(args);
+    }
 }

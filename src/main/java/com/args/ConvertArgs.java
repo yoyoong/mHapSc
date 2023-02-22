@@ -1,12 +1,18 @@
 package com.args;
 
+import com.common.Annotation;
+
 import java.io.Serializable;
 
 public class ConvertArgs implements Serializable {
-    public String inputPath = ""; // input file, gz format
-    public String cpgPath = ""; // genomic CpG file, gz format and Indexed
-    public String outputDir = ""; // output directory, created in advance
-    public String tag = "convert.out"; // prefix of the output files
+    @Annotation("input file, gz format")
+    public String inputPath = "";
+    @Annotation("genomic CpG file, gz format and Indexed")
+    public String cpgPath = "";
+    @Annotation("output directory, created in advance")
+    public String outputDir = "";
+    @Annotation("prefix of the output files")
+    public String tag = "convert.out";
 
     public boolean nanopolish = false; // whether inputPath is nanopolish file
 
