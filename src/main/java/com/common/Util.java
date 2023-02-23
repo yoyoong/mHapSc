@@ -461,26 +461,32 @@ public class Util {
         return r2Info;
     }
 
-    public R2Info getR2Info(Integer[][] cpgHpMat, Integer col1, Integer col2, Integer rowNum) {
+    public R2Info getR2InfoFromMatrix(Integer[][] mHapMatrix, Integer col1, Integer col2, Integer r2Cov) {
         R2Info r2Info = new R2Info();
-
         Integer N00 = 0;
         Integer N01 = 0;
         Integer N10 = 0;
         Integer N11 = 0;
 
-        for (int i = 0; i < rowNum; i++) {
-            if (cpgHpMat[i][col1] != null && cpgHpMat[i][col2] != null) {
-                if (cpgHpMat[i][col1] == 0 && cpgHpMat[i][col2] == 0) {
+        for (int i = 0; i < mHapMatrix.length; i++) {
+            Integer[] line = mHapMatrix[i];
+            Integer c1 = mHapMatrix[i][col1];
+            Integer c2 = mHapMatrix[i][col2];
+            if (mHapMatrix[i][col1] != null && mHapMatrix[i][col2] != null) {
+                if (mHapMatrix[i][col1] == 0 && mHapMatrix[i][col2] == 0) {
                     N00++;
-                } else if (cpgHpMat[i][col1] == 0 && cpgHpMat[i][col2] == 1) {
+                } else if (mHapMatrix[i][col1] == 0 && mHapMatrix[i][col2] == 1) {
                     N01++;
-                } else if (cpgHpMat[i][col1] == 1 && cpgHpMat[i][col2] == 0) {
+                } else if (mHapMatrix[i][col1] == 1 && mHapMatrix[i][col2] == 0) {
                     N10++;
-                } else if (cpgHpMat[i][col1] == 1 && cpgHpMat[i][col2] == 1) {
+                } else if (mHapMatrix[i][col1] == 1 && mHapMatrix[i][col2] == 1) {
                     N11++;
                 }
             }
+        }
+
+        if ((N00 + N01 + N10 + N11) < r2Cov) {
+            return null;
         }
 
         /// 计算r2

@@ -334,25 +334,4 @@ public class Track {
 
         return mm;
     }
-
-    private Double getMeanR2(Integer[][] cpgHpMatInRegion, List<Integer> cpgPosListInRegion, Integer totalStrandCnt, int pos) {
-        Double r2Sum = 0.0;
-        List<Double> r2List = new ArrayList<>();
-
-        for (int j = pos - 2; j < pos + 3; j++) {
-            if (j < 0 || j == pos ||  j >= cpgPosListInRegion.size()) {
-                continue;
-            }
-            R2Info r2Info = util.getR2Info(cpgHpMatInRegion, pos, j, totalStrandCnt);
-            if (r2Info != null && r2Info.getR2() != Double.NaN) {
-                r2List.add(r2Info.getR2());
-            }
-        }
-
-        for (int i = 0; i < r2List.size(); i++) {
-            r2Sum += r2List.get(i);
-        }
-
-        return r2Sum / r2List.size();
-    }
 }

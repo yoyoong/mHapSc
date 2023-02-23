@@ -27,8 +27,4 @@ public class StatOutputFile extends OutputFile {
         bufferedWriter.write(headString);
     }
 
-    @Override
-    public void writeLine(String line) throws IOException, IllegalAccessException {
-
-    }
 }
