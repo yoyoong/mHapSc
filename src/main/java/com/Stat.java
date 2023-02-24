@@ -119,12 +119,13 @@ public class Stat {
         Integer nMS = 0; // 长度大于等于K个位点且含有甲基化位点的strand个数
         Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
         while (iterator.hasNext()) {
-            List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
+            String key = iterator.next();
+            List<MHapInfo> mHapInfoList = mHapInfoListMap.get(key);
             Boolean hasMethFlag = false;
             Boolean hasBothFlag = false;
             Integer sumNotNullSite = 0;
             for (MHapInfo mHapInfo : mHapInfoList) {
-                String cpg = mHapInfo.getCpg();
+                String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);;
                 tBase += cpg.length();
                 for (int j = 0; j < cpg.length(); j++) {
                     if (cpg.charAt(j) == '1') {
@@ -138,12 +139,13 @@ public class Stat {
                         }
                     }
                 }
-                if ((sumNotNullSite += cpg.length()) >= args.getK()) {
-                    if (cpg.contains("1")) {
-                        hasMethFlag = true;
-                        if (cpg.contains("0")) {
-                            hasBothFlag = true;
-                        }
+                sumNotNullSite += cpg.length();
+                if (cpg.contains("1")) {
+                    hasMethFlag = true;
+                }
+                if (hasMethFlag) {
+                    if (cpg.contains("0")) {
+                        hasBothFlag = true;
                     }
                 }
             }
