@@ -246,7 +246,7 @@ public class MainTest extends TestCase {
 //        String arg7 = "-region";
 //        String arg8 = "chr1:566520-566816";
         String arg7 = "-bedPath";
-        String arg8 = "CRC_MHB.bed";
+        String arg8 = "CRC_MHB111.bed";
         String arg9 = "-bcFile";
         String arg10 = "";
         String arg11 = "-outputFile";

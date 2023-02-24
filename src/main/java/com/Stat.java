@@ -6,6 +6,7 @@ import com.bean.MHapInfo;
 import com.bean.R2Info;
 import com.bean.Region;
 import com.common.Util;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,8 @@ public class Stat {
         }
         StatOutputFile statOutputFile = new StatOutputFile("", args.getOutputFile());
         statOutputFile.setMetricsList(metricsList);
-        String headString = "chr" + "\t" + "start" + "\t" + "end";
+        String headString = "chr" + "\t" + "start" + "\t" + "end" + "\t" + "nStrands" + "\t" + "mBase" + "\t" + "cBase" + "\t"
+                + "tBase" + "\t" + "K4plus" + "\t" + "nDS" + "\t" + "nMS";
         statOutputFile.writeHead(headString);
 
         // get the metric list
@@ -108,55 +110,65 @@ public class Stat {
 
     private boolean getStat(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion, Region region,
                             List<String> metricsList, StatOutputFile statOutputFile) throws Exception {
-        Integer nReads = 0; // 总read个数
+        Integer nStrands = mHapInfoListMap.size(); // 总链数（tanghulu上一行为一个链，可能会含有多条read）
         Integer mBase = 0; // 甲基化位点个数
-        Integer cBase = 0; // 存在甲基化的read中的未甲基化位点个数
+        Integer cBase = 0; // 存在甲基化的strand中的未甲基化位点个数
         Integer tBase = 0; // 总位点个数
-        Integer K4plus = 0; // 长度大于等于K个位点的read个数
-        Integer nDR = 0; // 长度大于等于K个位点且同时含有甲基化和未甲基化位点的read个数
-        Integer nMR = 0; // 长度大于等于K个位点且含有甲基化位点的read个数
+        Integer K4plus = 0; // 长度大于等于K个位点的strand个数
+        Integer nDS = 0; // 长度大于等于K个位点且同时含有甲基化和未甲基化位点的strand个数
+        Integer nMS = 0; // 长度大于等于K个位点且含有甲基化位点的strand个数
         Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
         while (iterator.hasNext()) {
             List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
+            Boolean hasMethFlag = false;
+            Boolean hasBothFlag = false;
+            Integer sumNotNullSite = 0;
             for (MHapInfo mHapInfo : mHapInfoList) {
                 String cpg = mHapInfo.getCpg();
-                Integer cnt = mHapInfo.getCnt();
-                nReads += cnt;
-                tBase += cpg.length() * cnt;
+                tBase += cpg.length();
                 for (int j = 0; j < cpg.length(); j++) {
                     if (cpg.charAt(j) == '1') {
-                        mBase += cnt;
+                        mBase++;
                     }
                 }
                 if (cpg.contains("1")) {
                     for (int j = 0; j < cpg.length(); j++) {
                         if (cpg.charAt(j) == '0') {
-                            cBase += cnt;
+                            cBase++;
                         }
                     }
                 }
-                if (cpg.length() >= args.getK()) {
-                    K4plus += cnt;
+                if ((sumNotNullSite += cpg.length()) >= args.getK()) {
                     if (cpg.contains("1")) {
-                        nMR += cnt;
+                        hasMethFlag = true;
                         if (cpg.contains("0")) {
-                            nDR += cnt;
+                            hasBothFlag = true;
                         }
                     }
                 }
             }
+            if (sumNotNullSite >= args.getK()) {
+                K4plus++;
+                if (hasMethFlag) {
+                    nMS++;
+                }
+                if (hasBothFlag) {
+                    nDS++;
+                }
+            }
         }
 
-        String lineString = region.getChrom() + "\t" + region.getStart() + "\t" + region.getEnd();
+        String lineString = region.getChrom() + "\t" + region.getStart() + "\t" + region.getEnd() + "\t" + nStrands +
+                "\t" + mBase + "\t" + cBase + "\t" + tBase + "\t" + K4plus + "\t" + nDS + "\t" + nMS;
         for (String metrics : metricsList) {
             if (metrics.equals("MM")) {
                 Double mm = mBase.doubleValue() / tBase.doubleValue();
                 lineString += "\t" + String.format("%.8f", mm);
             } else if (metrics.equals("CHALM")) {
-                Double chalm = nMR.doubleValue() / K4plus.doubleValue();
+                Double chalm = nMS.doubleValue() / K4plus.doubleValue();
                 lineString += "\t" + String.format("%.8f", chalm);
             } else if (metrics.equals("PDR")) {
-                Double pdr = nDR.doubleValue() / K4plus.doubleValue();
+                Double pdr = nDS.doubleValue() / K4plus.doubleValue();
                 lineString += "\t" + String.format("%.8f", pdr);
             } else if (metrics.equals("MHL")) {
                 Double mhl = calculateMHL(mHapInfoListMap, args.getMinK(), args.getMaxK());
