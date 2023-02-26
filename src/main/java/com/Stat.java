@@ -124,6 +124,7 @@ public class Stat {
             Boolean hasMethFlag = false;
             Boolean hasBothFlag = false;
             Integer sumNotNullSite = 0;
+            Integer cBaseInRead = 0;
             for (MHapInfo mHapInfo : mHapInfoList) {
                 String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);;
                 tBase += cpg.length();
@@ -131,12 +132,8 @@ public class Stat {
                     if (cpg.charAt(j) == '1') {
                         mBase++;
                     }
-                }
-                if (cpg.contains("1")) {
-                    for (int j = 0; j < cpg.length(); j++) {
-                        if (cpg.charAt(j) == '0') {
-                            cBase++;
-                        }
+                    if (cpg.charAt(j) == '0') {
+                        cBaseInRead++;
                     }
                 }
                 sumNotNullSite += cpg.length();
@@ -148,6 +145,9 @@ public class Stat {
                         hasBothFlag = true;
                     }
                 }
+            }
+            if (hasMethFlag) {
+                cBase += cBaseInRead;
             }
             if (sumNotNullSite >= args.getK()) {
                 K4plus++;
