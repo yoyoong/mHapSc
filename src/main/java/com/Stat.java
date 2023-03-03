@@ -327,8 +327,8 @@ public class Stat {
                 R2Info r2Info = util.getR2InfoFromMatrix(mHapMatrix, i, j, args.getR2Cov());
                 if (r2Info != null && r2Info.getR2() != null && !r2Info.getR2().isNaN()) {
                     r2Sum += r2Info.getR2();
+                    r2Num++;
                 }
-                r2Num++;
             }
         }
         return r2Sum/r2Num;
