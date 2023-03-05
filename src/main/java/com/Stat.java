@@ -173,16 +173,16 @@ public class Stat {
                 Double pdr = nDS.doubleValue() / K4plus.doubleValue();
                 lineString += "\t" + String.format("%.8f", pdr);
             } else if (metrics.equals("MHL")) {
-                Double mhl = calculateMHL(mHapInfoListMap, args.getMinK(), args.getMaxK());
+                Double mhl = calculateMHL(mHapInfoListMap, cpgPosList, cpgPosListInRegion, args.getMinK(), args.getMaxK());
                 lineString += "\t" + String.format("%.8f", mhl);
             } else if (metrics.equals("MBS")) {
-                Double mbs = calculateMBS(mHapInfoListMap, args.getK());
+                Double mbs = calculateMBS(mHapInfoListMap, cpgPosList, cpgPosListInRegion, args.getK());
                 lineString += "\t" + String.format("%.8f", mbs);
             } else if (metrics.equals("MCR")) {
                 Double mcr = cBase.doubleValue() / tBase.doubleValue();
                 lineString += "\t" + String.format("%.8f", mcr);
             } else if (metrics.equals("Entropy")) {
-                Double entropy = calculateEntropy(mHapInfoListMap, args.getK());
+                Double entropy = calculateEntropy(mHapInfoListMap, cpgPosList, cpgPosListInRegion, args.getK());
                 lineString += "\t" + String.format("%.8f", entropy);
             } else if (metrics.equals("R2")) {
                 Double r2 = calculateR2(mHapInfoListMap, cpgPosList, cpgPosListInRegion);
@@ -195,19 +195,21 @@ public class Stat {
         return true;
     }
 
-    public Double calculateMHL(Map<String, List<MHapInfo>> mHapInfoListMap, Integer minK, Integer maxK) {
+    public Double calculateMHL(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList,
+                               List<Integer> cpgPosListInRegion, Integer minK, Integer maxK) {
         Double MHL = 0.0;
         Integer maxCpgLength = 0;
         Iterator<String> iterator = mHapInfoListMap.keySet().iterator();
         while (iterator.hasNext()) {
             List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
             for (MHapInfo mHapInfo : mHapInfoList) {
-                if (minK > mHapInfo.getCpg().length()) {
+                String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);
+                if (minK > cpg.length()) {
                     log.error("calculate MHL Error: minK is too large.");
                     return 0.0;
                 }
-                if (maxCpgLength < mHapInfo.getCpg().length()) {
-                    maxCpgLength = mHapInfo.getCpg().length();
+                if (maxCpgLength < cpg.length()) {
+                    maxCpgLength = cpg.length();
                 }
             }
         }
@@ -230,9 +232,10 @@ public class Stat {
             while (iterator.hasNext()) {
                 List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
                 for (MHapInfo mHapInfo : mHapInfoList) {
-                    if (mHapInfo.getCpg().length() >= kmer) {
-                        for (int k = 0; k < mHapInfo.getCpg().length() - kmer + 1; k++) {
-                            String kmerStr = mHapInfo.getCpg().substring(k, k + kmer);
+                    String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);
+                    if (cpg.length() >= kmer) {
+                        for (int k = 0; k < cpg.length() - kmer + 1; k++) {
+                            String kmerStr = cpg.substring(k, k + kmer);
                             if (kmerMap.containsKey(kmerStr)) {
                                 kmerMap.put(kmerStr, kmerMap.get(kmerStr) + mHapInfo.getCnt());
                             } else {
@@ -260,7 +263,8 @@ public class Stat {
         return MHL;
     }
 
-    public Double calculateMBS(Map<String, List<MHapInfo>> mHapInfoListMap, Integer K) {
+    public Double calculateMBS(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList,
+                               List<Integer> cpgPosListInRegion, Integer K) {
         Double MBS = 0.0;
         Integer kmerNum = 0;
         Double temp1 = 0.0;
@@ -268,13 +272,14 @@ public class Stat {
         while (iterator.hasNext()) {
             List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
             for (MHapInfo mHapInfo : mHapInfoList) {
-                if (mHapInfo.getCpg().length() >= K) {
-                    String[] cpgStrList = mHapInfo.getCpg().split("0");
+                String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);
+                if (cpg.length() >= K) {
+                    String[] cpgStrList = cpg.split("0");
                     Double temp2 = 0.0;
-                    for (String cpg : cpgStrList) {
-                        temp2 += Math.pow(cpg.length(), 2);
+                    for (String cpgStr : cpgStrList) {
+                        temp2 += Math.pow(cpgStr.length(), 2);
                     }
-                    temp1 += temp2 / Math.pow(mHapInfo.getCpg().length(), 2) * mHapInfo.getCnt();
+                    temp1 += temp2 / Math.pow(cpg.length(), 2) * mHapInfo.getCnt();
                     kmerNum += mHapInfo.getCnt();
                 }
             }
@@ -284,7 +289,8 @@ public class Stat {
         return MBS;
     }
 
-    public Double calculateEntropy(Map<String, List<MHapInfo>> mHapInfoListMap, Integer K) {
+    public Double calculateEntropy(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList,
+                                   List<Integer> cpgPosListInRegion, Integer K) {
         Double Entropy = 0.0;
         Map<String, Integer> kmerMap = new HashMap<>();
         Integer kmerAll = 0;
@@ -292,10 +298,11 @@ public class Stat {
         while (iterator.hasNext()) {
             List<MHapInfo> mHapInfoList = mHapInfoListMap.get(iterator.next());
             for (MHapInfo mHapInfo : mHapInfoList) {
-                if (mHapInfo.getCpg().length() >= K) {
-                    for (int j = 0; j < mHapInfo.getCpg().length() - K + 1; j++) {
+                String cpg = util.cutReads(mHapInfo, cpgPosList, cpgPosListInRegion);
+                if (cpg.length() >= K) {
+                    for (int j = 0; j < cpg.length() - K + 1; j++) {
                         kmerAll += mHapInfo.getCnt();
-                        String kmerStr = mHapInfo.getCpg().substring(j, j + K);
+                        String kmerStr = cpg.substring(j, j + K);
                         if (kmerMap.containsKey(kmerStr)) {
                             kmerMap.put(kmerStr, kmerMap.get(kmerStr) + mHapInfo.getCnt());
                         } else {
