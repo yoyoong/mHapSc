@@ -55,6 +55,26 @@ public class MHapFile {
         return mHapInfoListMap;
     }
 
+    /*
+     A strand format: - mean null site, 1 mean methlation site, 0 mean unmethlation site, e.g. -----1111100000---111---
+     */
+    public ArrayList<String> matrixToStrangList(Integer[][] mHapMatrix) {
+        ArrayList<String> strandList = new ArrayList<>();
+        for (int i = 0; i < mHapMatrix.length; i++) {
+            String strand = "";
+            Integer[] row = mHapMatrix[i];
+            for (int j = 0; j < row.length; j++) {
+                if (mHapMatrix[i][j] == null) {
+                    strand += "-";
+                } else {
+                    strand += mHapMatrix[i][j];
+                }
+            }
+            strandList.add(strand);
+        }
+        return strandList;
+    }
+
     public Integer[][] getMHapMatrix(Map<String, List<MHapInfo>> mHapInfoListMap, List<Integer> cpgPosList, List<Integer> cpgPosListInRegion) {
         Integer[][] mHapMatrix = new Integer[mHapInfoListMap.size()][cpgPosListInRegion.size()];
 
