@@ -286,9 +286,9 @@ public class Stat {
         Integer kmerAll = 0;
         for (String strand : strandList) {
             for (int j = 0; j < strand.length() - K + 1; j++) {
-                kmerAll++;
                 String kmerStr = strand.substring(j, j + K);
                 if (!kmerStr.contains("-")) {
+                    kmerAll++;
                     if (kmerMap.containsKey(kmerStr)) {
                         kmerMap.put(kmerStr, kmerMap.get(kmerStr) + 1);
                     } else {
