@@ -261,18 +261,20 @@ public class Stat {
         Integer kmerNum = 0;
         Double temp1 = 0.0;
         for (String strand : strandList) {
-            String[] strandArray = strand.split("-");
-            for (String read : strandArray) {
-                if (read.length() >= K) {
+            Integer strandLength = strand.replaceAll("-", "").trim().length();
+            if (strandLength >= K) {
+                String[] readArray = strand.split("-");
+                Double temp2 = 0.0;
+                for (String read : readArray) {
                     String[] cpgStrList = read.split("0");
-                    Double temp2 = 0.0;
                     for (String cpgStr : cpgStrList) {
                         temp2 += Math.pow(cpgStr.length(), 2);
                     }
-                    temp1 += temp2 / Math.pow(read.length(), 2);
-                    kmerNum++;
                 }
+                temp1 += temp2 / Math.pow(strandLength, 2);
             }
+
+            kmerNum++;
         }
         MBS = temp1 / kmerNum.doubleValue();
 
