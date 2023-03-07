@@ -272,9 +272,8 @@ public class Stat {
                     }
                 }
                 temp1 += temp2 / Math.pow(strandLength, 2);
+                kmerNum++;
             }
-
-            kmerNum++;
         }
         MBS = temp1 / kmerNum.doubleValue();
 
