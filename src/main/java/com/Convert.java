@@ -1,9 +1,8 @@
 package com;
 
+import com.File.CpgFile;
 import com.args.ConvertArgs;
-import com.bean.NanopolishInfo;
-import com.bean.Region;
-import com.bean.ScBedInfo;
+import com.bean.*;
 import com.common.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,10 +19,13 @@ public class Convert {
     Util util = new Util();
     long totalLineCnt = 0l;
     long completeDLineCnt = 0l;
+    CpgFile cpgFile;
+    BufferedWriter bufferedWriter;
 
     public void convert(ConvertArgs convertArgs) throws Exception {
         log.info("Convert start!");
         args = convertArgs;
+        cpgFile = new CpgFile(args.getCpgPath());
 
         // check the command
         boolean checkResult = checkArgs();
@@ -32,13 +34,22 @@ public class Convert {
             return;
         }
 
-        if (args.isNanopolish()) {
+        // create the output directory and file
+        bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".mhap");
+
+        if (args.isNanopolishFlag()) {
             boolean convertNanopolishResult = convertNanopolish();
             if (!convertNanopolishResult) {
                 log.error("convertNanopolish fail, please check the command.");
                 return;
             }
-        } else {
+        } else if (args.isAllcFlag()) {
+            boolean convertAllcResult = convertAllc();
+            if (!convertAllcResult) {
+                log.error("convertAllc fail, please check the command.");
+                return;
+            }
+        } else{
             boolean convertScResult = convertSc();
             if (!convertScResult) {
                 log.error("convertSc fail, please check the command.");
@@ -46,6 +57,8 @@ public class Convert {
             }
         }
 
+        cpgFile.close();
+        bufferedWriter.close();
         log.info("Convert end!");
     }
 
@@ -61,10 +74,11 @@ public class Convert {
 
     private boolean convertNanopolish() throws Exception {
         // parse whole cpg file
-        Map<String, List<Integer>> cpgPostListMap = util.parseWholeCpgFile(args.getCpgPath());
-
-        // create the output directory and file
-        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".mhap");
+        Map<String, List<Integer>> cpgPostListMap = cpgFile.parseWholeGroupByChrom();
+        if (cpgPostListMap.size() < 1) {
+            log.error("Cpg file is null, please check!");
+            return false;
+        }
 
         FileInputStream fileInputStream = new FileInputStream(args.getInputPath());
         GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -183,8 +197,120 @@ public class Convert {
                     "\t" + cpgStr + "\t" + "1" + "\t" + lastStrand + "\t" + lastBarcode + "\n");
         }
 
-        bufferedWriter.close();
         return true;
+    }
+
+    private boolean convertAllc() throws Exception {
+        Map<String, List<Integer>> cpgPostListMap = cpgFile.parseWholeGroupByChrom();
+        if (cpgPostListMap.size() < 1) {
+            log.error("Cpg file is null, please check!");
+            return false;
+        }
+
+        FileInputStream fileInputStream = new FileInputStream(args.getInputPath());
+        GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
+        InputStreamReader inputStreamReader = new InputStreamReader(gzipInputStream);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        String allcLine = bufferedReader.readLine();
+        List<Integer> cpgPostList = new ArrayList<>();
+        String barCode = args.getInputPath().substring(0, args.getInputPath().indexOf("_"));
+        String lastChrom = "";
+        String thisChrom = "";
+        String lastStrand = "";
+        String thisStrand = "";
+        String cpgStr = "";
+        List<AllcInfo> allcInfoList = new ArrayList<>(); // llcInfo line list from last extend end to this extend end
+        while (allcLine != null && !allcLine.equals("")) {
+            allcLine = bufferedReader.readLine();
+            if (allcLine == null || allcLine.equals("") || allcLine.split("\t").length < 6) {
+                continue;
+            }
+            AllcInfo allcInfo = new AllcInfo();
+            allcInfo.setChromosome(allcLine.split("\t")[0]);
+            allcInfo.setStrand(allcLine.split("\t")[2]);
+            if (allcInfo.getStrand().equals("+")) {
+                allcInfo.setPosition(Integer.valueOf(allcLine.split("\t")[1]));
+            } else {
+                allcInfo.setPosition(Integer.valueOf(allcLine.split("\t")[1]) - 1);
+            }
+            allcInfo.setSequenceContext(allcLine.split("\t")[3]);
+            allcInfo.setMc(Integer.valueOf(allcLine.split("\t")[4]));
+            allcInfo.setCov(Integer.valueOf(allcLine.split("\t")[5]));
+            allcInfo.setMethylated(Integer.valueOf(allcLine.split("\t")[6]));
+
+            // check this chrom whether equal with last chrom
+            thisChrom = allcInfo.getChromosome();
+            if (!lastChrom.equals("") && !thisChrom.equals(lastChrom)) {
+                cpgPostList = cpgPostListMap.get(thisChrom);
+                if (allcInfoList.size() > 0) {
+                    bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+                }
+                allcInfoList = new ArrayList<>();
+                cpgStr = "";
+            } else if (lastChrom.equals("")) {
+                cpgPostList = cpgPostListMap.get(thisChrom);
+            }
+            lastChrom = thisChrom;
+            if (cpgPostList == null || cpgPostList.size() < 1) {
+                continue;
+            }
+
+            // check this strand whether equal with last strand
+            thisStrand = allcInfo.getStrand();
+            if (!lastStrand.equals("") && !thisStrand.equals(lastStrand)) {
+                if (allcInfoList.size() > 0) {
+                    bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+                }
+                allcInfoList = new ArrayList<>();
+                cpgStr = "";
+            }
+            lastStrand = thisStrand;
+
+            // check this cpg position whether follow with nanopolishList the last cpg position
+            Integer thisStartCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, allcInfo.getPosition());
+            if (thisStartCpgIndex < 0) {
+                continue;
+            }
+            Integer lastEndCpgIndex = thisStartCpgIndex;
+            if (allcInfoList.size() > 0) {
+                lastEndCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, allcInfoList.get(allcInfoList.size() - 1).getPosition());
+            }
+            if (lastEndCpgIndex > 0 && thisStartCpgIndex - lastEndCpgIndex > 1) {
+                if (allcInfoList.size() > 0) {
+                    bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+                }
+                allcInfoList = new ArrayList<>();
+                cpgStr = "";
+            }
+
+            if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) <= 0.1) {
+                cpgStr += "0";
+            } else if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) >= 0.9) {
+                cpgStr += "1";
+            } else {
+                continue;
+            }
+            allcInfoList.add(allcInfo);
+        }
+
+        if (allcInfoList.size() > 0) { // print the last allcInfoList to mhap file
+            bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+        }
+
+        return true;
+    }
+
+    private MHapInfo writeMHap(List<AllcInfo> allcInfoList, String chrom, String cpg, String strand, String badCode) {
+        MHapInfo mHapLine = new MHapInfo();
+        mHapLine.setChrom(chrom);
+        mHapLine.setStart(allcInfoList.get(0).getPosition());
+        mHapLine.setEnd(allcInfoList.get(allcInfoList.size() - 1).getPosition());
+        mHapLine.setCpg(cpg);
+        mHapLine.setCnt(1);
+        mHapLine.setStrand(strand);
+        mHapLine.setBarcode(badCode);
+        log.info(mHapLine.print());
+        return mHapLine;
     }
 
     private boolean convertSc() throws Exception {
@@ -200,9 +326,6 @@ public class Convert {
                 }
             }
         });
-
-        // create the output directory and file
-        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".mhap");
 
         for (Map.Entry<String, List<ScBedInfo>> scBedListInMap : sortedScBedListMap) {
             List<ScBedInfo> scBedList = scBedListInMap.getValue();
@@ -268,7 +391,6 @@ public class Convert {
 
             log.info("Convert " + scBedListInMap.getKey() + " end.");
         }
-        bufferedWriter.close();
 
         return true;
     }

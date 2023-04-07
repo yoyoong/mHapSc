@@ -126,7 +126,9 @@ public class Main {
                 convertArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
                 convertArgs.setTag(commandLine.getOptionValue("tag"));
                 if (commandLine.hasOption("nanopolish")) {
-                    convertArgs.setNanopolish(true);
+                    convertArgs.setNanopolishFlag(true);
+                } else if (commandLine.hasOption("allcFlag")) {
+                    convertArgs.setAllcFlag(true);
                 }
             }
         } else {
@@ -214,7 +216,7 @@ public class Main {
                 hf.printHelp("Options", options);
                 return null;
             } else {
-                mhbDiscoveryArgs.setmHapPath(commandLine.getOptionValue("mhapPath"));
+                mhbDiscoveryArgs.setmHapPath(commandLine.getOptionValue("mHapPath"));
                 mhbDiscoveryArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
                 if (commandLine.hasOption("bcFile")) {
                     mhbDiscoveryArgs.setBcFile(commandLine.getOptionValue("bcFile"));

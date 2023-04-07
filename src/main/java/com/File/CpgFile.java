@@ -6,10 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class CpgFile {
     public static final Logger log = LoggerFactory.getLogger(CpgFile.class);
@@ -55,6 +52,34 @@ public class CpgFile {
         }
 
         return cpgPosList;
+    }
+
+    public Map<String, List<Integer>> parseWholeGroupByChrom() throws Exception {
+        Map<String, List<Integer>> cpgPosListMap = new HashMap<>();
+
+        List<Integer> cpgPosList = new ArrayList<>();
+        String cpgLine = tabixReader.readLine();
+        String lastChr = cpgLine.split("\t")[0];
+        while(cpgLine != null && !cpgLine.equals("")) {
+            if (cpgLine.split("\t").length < 3) {
+                continue;
+            } else {
+                if (lastChr.equals(cpgLine.split("\t")[0])) {
+                    cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
+                } else {
+                    cpgPosListMap.put(lastChr, cpgPosList);
+                    lastChr = cpgLine.split("\t")[0];
+                    cpgPosList = new ArrayList<>();
+                    cpgPosList.add(Integer.valueOf(cpgLine.split("\t")[1]));
+                }
+                cpgLine = tabixReader.readLine();
+            }
+        }
+        cpgPosListMap.put(lastChr, cpgPosList);
+        log.info("Read cpg file success.");
+
+        tabixReader.close();
+        return cpgPosListMap;
     }
 
     public void close() {

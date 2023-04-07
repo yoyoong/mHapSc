@@ -77,6 +77,6 @@ public class MHapInfo implements Serializable {
 
     public String print() {
         return this.chrom + "\t" + this.start + "\t"+ this.end + "\t"
-                + this.cpg + "\t" + this.cnt + "\t" + this.strand + "\t" + this.barcode;
+                + this.cpg + "\t" + this.cnt + "\t" + this.strand + "\t" + this.barcode + "\n";
     }
 }

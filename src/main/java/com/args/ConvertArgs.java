@@ -1,20 +1,23 @@
 package com.args;
 
 import com.common.Annotation;
+import com.common.Constants;
 
 import java.io.Serializable;
 
 public class ConvertArgs implements Serializable {
-    @Annotation("input file, gz format")
+    @Annotation(Constants.INPUTPATH_DESCRIPTION)
     public String inputPath = "";
-    @Annotation("genomic CpG file, gz format and Indexed")
+    @Annotation(Constants.CPGPATH_DESCRIPTION)
     public String cpgPath = "";
-    @Annotation("output directory, created in advance")
+    @Annotation(Constants.OUTPUTDIR_DESCRIPTION)
     public String outputDir = "";
-    @Annotation("prefix of the output files")
+    @Annotation(Constants.TAG_DESCRIPTION)
     public String tag = "convert.out";
-
-    public boolean nanopolish = false; // whether inputPath is nanopolish file
+    @Annotation(Constants.NANOPOLISHFLAG_DESCRIPTION)
+    public boolean nanopolishFlag = false;
+    @Annotation(Constants.NANOPOLISHFLAG_DESCRIPTION)
+    public boolean allcFlag = false;
 
     public String getInputPath() {
         return inputPath;
@@ -48,11 +51,19 @@ public class ConvertArgs implements Serializable {
         this.tag = tag;
     }
 
-    public boolean isNanopolish() {
-        return nanopolish;
+    public boolean isNanopolishFlag() {
+        return nanopolishFlag;
     }
 
-    public void setNanopolish(boolean nanopolish) {
-        this.nanopolish = nanopolish;
+    public void setNanopolishFlag(boolean nanopolishFlag) {
+        this.nanopolishFlag = nanopolishFlag;
+    }
+
+    public boolean isAllcFlag() {
+        return allcFlag;
+    }
+
+    public void setAllcFlag(boolean allcFlag) {
+        this.allcFlag = allcFlag;
     }
 }

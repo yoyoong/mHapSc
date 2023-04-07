@@ -5,7 +5,7 @@ import org.junit.Test;
 public class MainTest extends TestCase {
 
     @Test
-    public void test_convert() throws Exception {
+    public void test_convert_nanopolish() throws Exception {
         Main main = new Main();
         String arg0 = "convert";
         String arg1 = "-inputPath";
@@ -16,7 +16,32 @@ public class MainTest extends TestCase {
         String arg6 = "outputDir";
         String arg7 = "-tag";
         String arg8 = "nanopolish_test";
-        String arg9 = "-nanopolish";
+        String arg9 = "-nanopolishFlag";
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9};
+
+        System.out.println("Work direqtory: " + System.getProperty("user.dir"));
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
+        main.main(args);
+    }
+
+    @Test
+    public void test_convert_allc() throws Exception {
+        Main main = new Main();
+        String arg0 = "convert";
+        String arg1 = "-inputPath";
+        String arg2 = "GSM3742106_allc_180322_CEMBA_mm_P56_P63_1A_CEMBA180226_1A_1_CEMBA180226_1A_2_A10_AD001_indexed.tsv.gz";
+        String arg3 = "-cpgPath";
+        String arg4 = "mm10_CpG.gz";
+        String arg5 = "-outputDir";
+        String arg6 = "outputDir";
+        String arg7 = "-tag";
+        String arg8 = "allc_test";
+        String arg9 = "-allcFlag";
         String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9};
 
         System.out.println("Work direqtory: " + System.getProperty("user.dir"));
@@ -36,9 +61,9 @@ public class MainTest extends TestCase {
         String arg1 = "-mhapPath";
         String arg2 = "/sibcb2/bioinformatics2/liaoxiqi/mhapSC/data/CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
-        String arg4 = "/sibcb1/bioinformatics/dataupload/iGenome/CpGs/hg19/hg19_CpG.gz";
+        String arg4 = "/sibcb2/bioinformatics/iGenome/CpG/Idx/hg19_CpG.gz";
         String arg5 = "-region";
-        String arg6 = "chr10:711569-711748";
+        String arg6 = "chr1:228746134-228746234";
         String arg7 = "-outputDir";
         String arg8 = "outputDir";
         String arg9 = "-tag";
@@ -97,7 +122,7 @@ public class MainTest extends TestCase {
     public void test_MHBDiscovery() throws Exception {
         Main main = new Main();
         String arg0 = "MHBDiscovery";
-        String arg1 = "-mhapPath";
+        String arg1 = "-mHapPath";
         String arg2 = "H103_cellline_methylationcall.mhap.gz";
 //        String arg3 = "-region";
 //        String arg4 = "chrX:153715286-153715374";

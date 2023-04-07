@@ -317,6 +317,7 @@ public class Stat {
             for (int j = i + 1; j < cpgPosListInRegion.size(); j++) {
                 R2Info r2Info = util.getR2InfoFromMatrix(mHapMatrix, i, j, args.getR2Cov());
                 if (r2Info != null && r2Info.getR2() != null && !r2Info.getR2().isNaN()) {
+                    log.info(cpgPosListInRegion.get(i) + "-" + cpgPosListInRegion.get(j) + ":" + " N00:" + + r2Info.getN00() + " N01:" + + r2Info.getN01() + " N10:" + + r2Info.getN10() + " N11:" + + r2Info.getN11() + " R2:" + + r2Info.getR2());
                     r2Sum += r2Info.getR2();
                     r2Num++;
                 }
