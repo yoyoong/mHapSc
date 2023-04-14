@@ -213,7 +213,8 @@ public class Convert {
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
         String allcLine = bufferedReader.readLine();
         List<Integer> cpgPostList = new ArrayList<>();
-        String barCode = args.getInputPath().substring(0, args.getInputPath().indexOf("_"));
+        String inputFileName = new File(args.getInputPath()).getName();
+        String barCode = inputFileName.substring(0, inputFileName.indexOf("_"));
         String lastChrom = "";
         String thisChrom = "";
         String lastStrand = "";
@@ -297,6 +298,8 @@ public class Convert {
             bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
         }
 
+        log.info("convertAllc barCode:" + barCode + " end!");
+
         return true;
     }
 
@@ -309,7 +312,6 @@ public class Convert {
         mHapLine.setCnt(1);
         mHapLine.setStrand(strand);
         mHapLine.setBarcode(badCode);
-        log.info(mHapLine.print());
         return mHapLine;
     }
 
