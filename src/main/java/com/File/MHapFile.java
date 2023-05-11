@@ -18,7 +18,38 @@ public class MHapFile {
         tabixReader = new TabixReader(mHapPath);
     }
 
-    public Map<String, List<MHapInfo>> parseByRegionIndexByBarCodeAndStrand(Region region, String strang, List barcodeList) throws IOException {
+    public Map<String, List<MHapInfo>> parseByRegionIndexByBarCode(Region region, List barcodeList) throws IOException {
+        TabixReader.Iterator mhapIterator = tabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
+        TreeMap<String, List<MHapInfo>> mHapListMap = new TreeMap<>(); // mhap数据列表（通过barcode索引）
+        String mHapLine = "";
+        while((mHapLine = mhapIterator.next()) != null) {
+            MHapInfo mHapInfo = new MHapInfo();
+            mHapInfo.setChrom(mHapLine.split("\t")[0]);
+            mHapInfo.setStart(Integer.valueOf(mHapLine.split("\t")[1]));
+            mHapInfo.setEnd(Integer.valueOf(mHapLine.split("\t")[2]));
+            mHapInfo.setCpg(mHapLine.split("\t")[3]);
+            mHapInfo.setCnt(Integer.valueOf(mHapLine.split("\t")[4]));
+            mHapInfo.setStrand(mHapLine.split("\t")[5]);
+            mHapInfo.setBarcode(mHapLine.split("\t")[6]);
+
+            if (!barcodeList.contains(mHapInfo.getBarcode())) {
+                continue;
+            } else {
+                if (mHapListMap.containsKey(mHapInfo.getBarcode())) {
+                    List<MHapInfo> mHapInfoList = mHapListMap.get(mHapInfo.getBarcode());
+                    mHapInfoList.add(mHapInfo);
+                } else {
+                    List<MHapInfo> mHapInfoList = new ArrayList<>();
+                    mHapInfoList.add(mHapInfo);
+                    mHapListMap.put(mHapInfo.getBarcode(), mHapInfoList);
+                }
+            }
+        }
+
+        return mHapListMap;
+    }
+
+    public Map<String, List<MHapInfo>> parseByRegionIndexByBarCodeAndStrand(Region region, String strand, List barcodeList) throws IOException {
         TabixReader.Iterator mhapIterator = tabixReader.query(region.getChrom(), region.getStart() - 1, region.getEnd());
         TreeMap<String, List<MHapInfo>> mHapInfoListMap = new TreeMap<>(); // mhap数据列表（通过barcode索引）
         String mHapLine = "";

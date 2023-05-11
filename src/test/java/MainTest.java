@@ -301,4 +301,69 @@ public class MainTest extends TestCase {
 
         main.main(args);
     }
+
+    @Test
+    public void test_scStat() throws Exception {
+        Main main = new Main();
+        String arg0 = "scStat";
+        String arg1 = "-metrics";
+        String arg2 = "MM";
+        String arg3 = "-mhapPath";
+        String arg4 = "CRC_hg19.mhap.gz";
+        String arg5 = "-cpgPath";
+        String arg6 = "hg19_CpG.gz";
+//        String arg7 = "-region";
+//        String arg8 = "chr1:566520-566816";
+        String arg7 = "-bedPath";
+        String arg8 = "CRC_MHB.bed";
+        String arg9 = "-bcFile";
+        String arg10 = "Methy_barcode.txt";
+        String arg11 = "-outputDir";
+        String arg12 = "ScStatOutput";
+        String arg13 = "-tag";
+        String arg14 = "promoter";
+
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14};
+        System.out.println("Work direqtory: " + System.getProperty("user.dir"));
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
+        main.main(args);
+    }
+
+    @Test
+    public void test_CSNDiscovery() throws Exception {
+        Main main = new Main();
+        String arg0 = "CSNDiscovery";
+        String arg1 = "-mHapPath";
+        String arg2 = "CRC_hg19.mhap.gz";
+        String arg3 = "-cpgPath";
+        String arg4 = "hg19_CpG.gz";
+        String arg5 = "-bedPath";
+        String arg6 = "CRC_MHB.bed";
+        String arg7 = "-bcFile";
+        String arg8 = "Methy_barcode.txt";
+        String arg9 = "-boxSize";
+        String arg10 = "0.1";
+        String arg15 = "-alpha";
+        String arg16 = "0.01";
+        String arg11 = "-outputDir";
+        String arg12 = "CSNDiscovery";
+        String arg13 = "-tag";
+        String arg14 = "CSN";
+        String arg17 = "-ndmFlag";
+
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17};
+        System.out.println("Work direqtory: " + System.getProperty("user.dir"));
+        String argsStr = "";
+        for (int i = 0; i < args.length; i++) {
+            argsStr += args[i] + " ";
+        }
+        System.out.println(argsStr);
+
+        main.main(args);
+    }
 }
