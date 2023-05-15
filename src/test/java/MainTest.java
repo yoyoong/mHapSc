@@ -335,9 +335,9 @@ public class MainTest extends TestCase {
     }
 
     @Test
-    public void test_CSNDiscovery() throws Exception {
+    public void test_CSN() throws Exception {
         Main main = new Main();
-        String arg0 = "CSNDiscovery";
+        String arg0 = "CSN";
         String arg1 = "-mHapPath";
         String arg2 = "CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
@@ -351,7 +351,7 @@ public class MainTest extends TestCase {
         String arg15 = "-alpha";
         String arg16 = "0.01";
         String arg11 = "-outputDir";
-        String arg12 = "CSNDiscovery";
+        String arg12 = "CSN";
         String arg13 = "-tag";
         String arg14 = "CSN";
         String arg17 = "-ndmFlag";

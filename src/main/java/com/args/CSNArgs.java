@@ -5,7 +5,7 @@ import com.common.Constants;
 
 import java.io.Serializable;
 
-public class CSNDiscoveryArgs implements Serializable {
+public class CSNArgs implements Serializable {
     @Annotation(Constants.MHAPPATH_DESCRIPTION)
     public String mHapPath = "";
     @Annotation(Constants.BCFILE_DESCRIPTION)
@@ -21,7 +21,7 @@ public class CSNDiscoveryArgs implements Serializable {
     @Annotation(Constants.OUTPUTDIR_DESCRIPTION)
     public String outputDir = "";
     @Annotation(Constants.TAG_DESCRIPTION)
-    public String tag = "CSNDiscovery.out";
+    public String tag = "CSN.out";
     @Annotation(Constants.NDMFLAG_DESCRIPTION)
     public boolean ndmFlag = false;
 

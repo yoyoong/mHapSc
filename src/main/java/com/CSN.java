@@ -2,40 +2,40 @@ package com;
 
 import Jama.Matrix;
 import com.File.*;
-import com.args.CSNDiscoveryArgs;
+import com.args.CSNArgs;
 import com.bean.MHapInfo;
 import com.bean.Region;
 import com.common.Util;
-import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class CSNDiscovery {
-    public static final Logger log = LoggerFactory.getLogger(CSNDiscovery.class);
+public class CSN {
+    public static final Logger log = LoggerFactory.getLogger(CSN.class);
 
     Util util = new Util();
-    CSNDiscoveryArgs args = new CSNDiscoveryArgs();
+    CSNArgs args = new CSNArgs();
     List<Region> regionList = new ArrayList<>();
+    List<String> barcodeList = new ArrayList<>();
     MHapFile mHapFile;
     CpgFile cpgFile;
     BedFile bedFile;
     BarcodeFile barcodeFile;
+    CSNOutputFile csnOutputFile;
+    BufferedWriter ndmBufferedWriter;
 
-    public void csnDiscovery(CSNDiscoveryArgs csnDiscoveryArgs) throws Exception {
-        log.info("CSNDiscovery start!");
-        args = csnDiscoveryArgs;
+    public void csn(CSNArgs csnArgs) throws Exception {
+        log.info("CSN start!");
+        args = csnArgs;
         mHapFile = new MHapFile(args.getmHapPath());
         cpgFile = new CpgFile(args.getCpgPath());
         bedFile = new BedFile(args.getBedPath());
         barcodeFile = new BarcodeFile(args.getBcFile());
+        csnOutputFile = new CSNOutputFile(args.getOutputDir(), args.getTag() + ".txt");
 
         // check the command
         boolean checkResult = checkArgs();
@@ -45,14 +45,14 @@ public class CSNDiscovery {
         }
 
         // get region list from bed file
-        List<Region> regionList = bedFile.parseWholeFile();
+        regionList = bedFile.parseWholeFile();
         if (regionList.size() < 1) {
             log.info("The bed file is empty.");
             return;
         }
 
         // get bcFile
-        List<String> barcodeList = barcodeFile.parseBcFile();
+        barcodeList = barcodeFile.parseBcFile();
         if (barcodeList.size() < 1) {
             log.info("The barcode file is empty.");
             return;
@@ -94,38 +94,34 @@ public class CSNDiscovery {
             }
         }
 
-//        double[][] rawData = new double[51][1018];
-//        BufferedReader bufferedReader = new BufferedReader(new FileReader("logChumarker.txt"));
-//        String line = bufferedReader.readLine();
-//        Integer lineNum = 0;
-//        while((line = bufferedReader.readLine()) != null){
-//            String[] lineArray = Arrays.copyOfRange(line.split(" "), 1, line.split(" ").length);
-//            rawData[lineNum] = Arrays.stream(lineArray).mapToDouble(Double::parseDouble).toArray();
-//            lineNum++;
-//        }
-//        bufferedReader.close();
-
         Map<String, double[][]> upperlower = getUpperlower(mmMatrix);
         double[][] upper = upperlower.get("upper");
         double[][] lower = upperlower.get("lower");
 
+        ndmBufferedWriter = util.createOutputFile(args.getOutputDir(), "ndm.txt");
+        csnOutputFile.writeHead("");
         int[][] ndm = new int[regionList.size()][barcodeList.size()];
         for (int i = 0; i < barcodeList.size(); i++) {
             String barcode = barcodeList.get(i);
             Integer index = barcodeList.indexOf(barcode);
-            int[][] csn = getCSN(mmMatrix, upper, lower, index);
+            int[][] csn = getCSN(mmMatrix, upper, lower, index, csnOutputFile);
 
             if (args.isNdmFlag()) {
+                String ndmRow = "";
                 int[] ndmColumn = Arrays.stream(csn).mapToInt(item -> IntStream.of(item).sum()).toArray();
                 for (int j = 0; j < ndmColumn.length; j++) {
                     ndm[j][i] = ndmColumn[j];
+                    ndmRow += ndmColumn[j] + "\t";
                 }
+                ndmBufferedWriter.write(ndmRow.trim() + "\n");
             }
 
             log.info("Get csn of barcode:" + barcode + " end.");
         }
+        ndmBufferedWriter.close();
+        csnOutputFile.close();
 
-        log.info("CSNDiscovery end!");
+        log.info("CSN end!");
     }
 
     private boolean checkArgs() {
@@ -206,7 +202,8 @@ public class CSNDiscovery {
         return upperlower;
     }
 
-    private int[][] getCSN(double[][] rawData, double[][] upper, double[][] lower, Integer index) {
+    private int[][] getCSN(double[][] rawData, double[][] upper, double[][] lower, Integer index,
+                           CSNOutputFile csnOutputFile) throws Exception {
         Integer n1 = rawData.length;
         Integer n2 = rawData[0].length;
 
@@ -255,13 +252,17 @@ public class CSNDiscovery {
         int[][] csn = new int[n1][n1];
         NormalDistribution normalDistribution = new NormalDistribution();
         double level = normalDistribution.inverseCumulativeProbability(1 - args.getAlpha());
-        for (Integer row = 0; row < tempMatrix.getRowDimension(); row++) {
-            for (Integer col = 0; col < tempMatrix.getColumnDimension(); col++) {
-                if (row == col) {
-                    tempArray[row][col] = 0;
-                }
+        for (Integer row = 0; row < n1; row++) {
+            tempArray[row][row] = 0;
+            for (Integer col = row + 1; col < n1; col++) {
                 if (tempArray[row][col] > level) {
                     csn[row][col] = 1;
+                    csn[col][row] = 1;
+                    csnOutputFile.setBarCode(barcodeList.get(index));
+                    csnOutputFile.setRegion1(regionList.get(row).toHeadString());
+                    csnOutputFile.setRegion2(regionList.get(col).toHeadString());
+                    csnOutputFile.setStatistic(String.valueOf(tempArray[row][col]));
+                    csnOutputFile.writeLine("");
                 }
             }
         }

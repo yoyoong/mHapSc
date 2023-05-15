@@ -18,7 +18,7 @@ public class Main {
     static Flinkage flinkage = new Flinkage();
     static Stat stat = new Stat();
     static ScStat scStat = new ScStat();
-    static CSNDiscovery csnDiscovery = new CSNDiscovery();
+    static CSN csn = new CSN();
 
     public static void main(String[] args) throws Exception {
         System.setProperty("java.awt.headless", "true");
@@ -69,10 +69,10 @@ public class Main {
                 if (scStatArgs != null) {
                     scStat.scStat(scStatArgs);
                 }
-            } else if (args[0].equals("CSNDiscovery")) {
-                CSNDiscoveryArgs csnDiscoveryArgs = parseCSNDiscovery(args);
-                if (csnDiscoveryArgs != null) {
-                    csnDiscovery.csnDiscovery(csnDiscoveryArgs);
+            } else if (args[0].equals("CSN")) {
+                CSNArgs csnArgs = parseCSN(args);
+                if (csnArgs != null) {
+                    csn.csn(csnArgs);
                 }
             } else {
                 System.out.println("unrecognized command:" + args[0]);
@@ -459,10 +459,10 @@ public class Main {
         return scStatArgs;
     }
 
-    private static CSNDiscoveryArgs parseCSNDiscovery(String[] args) throws ParseException {
-        Options options = getOptions(CSNDiscoveryArgs.class.getDeclaredFields());
+    private static CSNArgs parseCSN(String[] args) throws ParseException {
+        Options options = getOptions(CSNArgs.class.getDeclaredFields());
         BasicParser parser = new BasicParser();
-        CSNDiscoveryArgs csnDiscoveryArgs = new CSNDiscoveryArgs();
+        CSNArgs csnArgs = new CSNArgs();
         CommandLine commandLine = parser.parse(options, args);
         if (commandLine.getOptions().length > 0) {
             if (commandLine.hasOption('h')) {
@@ -470,30 +470,30 @@ public class Main {
                 helpFormatter.printHelp("Options", options);
                 return null;
             } else {
-                csnDiscoveryArgs.setmHapPath(commandLine.getOptionValue("mHapPath"));
-                csnDiscoveryArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
-                csnDiscoveryArgs.setBedPath(commandLine.getOptionValue("bedPath"));
-                csnDiscoveryArgs.setBcFile(commandLine.getOptionValue("bcFile"));
+                csnArgs.setmHapPath(commandLine.getOptionValue("mHapPath"));
+                csnArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
+                csnArgs.setBedPath(commandLine.getOptionValue("bedPath"));
+                csnArgs.setBcFile(commandLine.getOptionValue("bcFile"));
                 if (commandLine.hasOption("boxSize")) {
-                    csnDiscoveryArgs.setBoxSize(Double.valueOf(commandLine.getOptionValue("boxSize")));
+                    csnArgs.setBoxSize(Double.valueOf(commandLine.getOptionValue("boxSize")));
                 }
                 if (commandLine.hasOption("alpha")) {
-                    csnDiscoveryArgs.setAlpha(Double.valueOf(commandLine.getOptionValue("alpha")));
+                    csnArgs.setAlpha(Double.valueOf(commandLine.getOptionValue("alpha")));
                 }
                 if (commandLine.hasOption("outputDir")) {
-                    csnDiscoveryArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
+                    csnArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
                 }
                 if (commandLine.hasOption("tag")) {
-                    csnDiscoveryArgs.setTag(commandLine.getOptionValue("tag"));
+                    csnArgs.setTag(commandLine.getOptionValue("tag"));
                 }
                 if (commandLine.hasOption("ndmFlag")) {
-                    csnDiscoveryArgs.setNdmFlag(true);
+                    csnArgs.setNdmFlag(true);
                 }
             }
         } else {
             System.out.println("The paramter is null");
         }
 
-        return csnDiscoveryArgs;
+        return csnArgs;
     }
 }
