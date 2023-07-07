@@ -266,7 +266,7 @@ public class Main {
     }
 
     private static HemiMArgs parseHemiM(String[] args) throws ParseException {
-        Options options = getOptions(TanghuluArgs.class.getDeclaredFields());
+        Options options = getOptions(HemiMArgs.class.getDeclaredFields());
         BasicParser parser = new BasicParser();
         HemiMArgs hemiMArgs = new HemiMArgs();
 

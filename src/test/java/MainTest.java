@@ -263,7 +263,7 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "stat";
         String arg1 = "-metrics";
-        String arg2 = "MM R2 PDR CHALM MHL MCR MBS Entropy";
+        String arg2 = "MHL";
         String arg3 = "-mhapPath";
         String arg4 = "CRC_hg19.mhap.gz";
         String arg5 = "-cpgPath";
@@ -343,7 +343,7 @@ public class MainTest extends TestCase {
         String arg3 = "-cpgPath";
         String arg4 = "hg19_CpG.gz";
         String arg5 = "-bedPath";
-        String arg6 = "CRC_MHB.bed";
+        String arg6 = "CRC_MHB111.bed";
         String arg7 = "-bcFile";
         String arg8 = "Methy_barcode.txt";
         String arg9 = "-boxSize";

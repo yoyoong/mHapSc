@@ -53,9 +53,17 @@ public class HemiM {
 
             // parse the cpg file
             List<Integer> cpgPosList = util.parseCpgFileWithShift(args.getCpgPath(), region, SHIFT);
+            if (cpgPosList.size() < 1) {
+                log.info("Region " + region.toHeadString() + " has no cpg position.Skip...");
+                continue;
+            }
 
             // get cpg site list in region
             List<Integer> cpgPosListInRegion = util.getcpgPosListInRegion(cpgPosList, region);
+            if (cpgPosListInRegion.size() < 1) {
+                log.info("Region " + region.toHeadString() + " has no cpg position.Skip...");
+                continue;
+            }
 
             Iterator<String> iterator = mHapListMap.keySet().iterator();
             while (iterator.hasNext()) {

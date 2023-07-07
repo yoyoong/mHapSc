@@ -35,7 +35,7 @@ public class CSN {
         cpgFile = new CpgFile(args.getCpgPath());
         bedFile = new BedFile(args.getBedPath());
         barcodeFile = new BarcodeFile(args.getBcFile());
-        csnOutputFile = new CSNOutputFile(args.getOutputDir(), args.getTag() + ".txt");
+        csnOutputFile = new CSNOutputFile(args.getOutputDir(), args.getTag() + ".CSN.txt");
 
         // check the command
         boolean checkResult = checkArgs();
@@ -98,7 +98,7 @@ public class CSN {
         double[][] upper = upperlower.get("upper");
         double[][] lower = upperlower.get("lower");
 
-        ndmBufferedWriter = util.createOutputFile(args.getOutputDir(), "ndm.txt");
+        ndmBufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".NDM.txt");
         csnOutputFile.writeHead("");
         int[][] ndm = new int[regionList.size()][barcodeList.size()];
         for (int i = 0; i < barcodeList.size(); i++) {
