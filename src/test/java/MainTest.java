@@ -176,7 +176,7 @@ public class MainTest extends TestCase {
         String arg10 = "outputDir";
         String arg11 = "-tag";
         String arg12 = "test";
-        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12};
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg7, arg8, arg9, arg10, arg11, arg12};
 
         System.out.println("Work direqtory: " + System.getProperty("user.dir"));
         String argsStr = "";

@@ -37,8 +37,26 @@ public class HemiM {
         if (args.getRegion() != null && !args.getRegion().equals("")) {
             Region region = util.parseRegion(args.getRegion());
             regionList.add(region);
-        } else {
+        } else if (args.getBedFile() != null && !args.getBedFile().equals("")) {
             regionList = util.parseBedFile(args.getBedFile());
+        } else {
+            Map<String, List<Integer>> cpgPostListMap = util.parseWholeCpgFile(args.getCpgPath());
+            Iterator<String> iterator = cpgPostListMap.keySet().iterator();
+            while (iterator.hasNext()) {
+                String chrom = iterator.next();
+                List<Integer> cpgPostList = cpgPostListMap.get(chrom);
+                Region region = new Region();
+                region.setChrom(chrom);
+                region.setStart(cpgPostList.get(0));
+                region.setEnd(cpgPostList.get(cpgPostList.size() - 1));
+                regionList.add(region);
+            }
+
+            Collections.sort(regionList, new Comparator<Region>() {
+                public int compare(Region o1, Region o2) {
+                    return o1.getChrom().compareTo(o2.getChrom());
+                }
+            });
         }
 
         // parse the barcodefile
@@ -138,14 +156,14 @@ public class HemiM {
             log.error("cpgPath can not be null.");
             return false;
         }
-        if (!args.getRegion().equals("") && !args.getBedFile().equals("")) {
-            log.error("Can not input region and bedPath at the same time.");
-            return false;
-        }
-        if (args.getRegion().equals("") && args.getBedFile().equals("")) {
-            log.error("Region and bedPath can not be null at the same time.");
-            return false;
-        }
+//        if (!args.getRegion().equals("") && !args.getBedFile().equals("")) {
+//            log.error("Can not input region and bedPath at the same time.");
+//            return false;
+//        }
+//        if (args.getRegion().equals("") && args.getBedFile().equals("")) {
+//            log.error("Region and bedPath can not be null at the same time.");
+//            return false;
+//        }
         return true;
     }
 }
