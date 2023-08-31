@@ -166,17 +166,18 @@ public class MainTest extends TestCase {
         String arg2 = "CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
         String arg4 = "hg19_CpG.gz";
-        String arg5 = "-bedFile";
-        String arg6 = "CRC_MHB_non_NC.bed";
-//        String arg5 = "-region";
-//        String arg6 = "chr1:3229375-3230473";
+//        String arg5 = "-bedFile";
+//        String arg6 = "CRC_MHB_non_NC.bed";
+        String arg5 = "-region";
+        String arg6 = "chr1:20000-323047";
         String arg7 = "-bcFile";
-        String arg8 = "CRC_LN.txt";
+        String arg8 = "Methy_barcode.txt";
         String arg9 = "-outputDir";
         String arg10 = "outputDir";
         String arg11 = "-tag";
         String arg12 = "test";
-        String[] args = {arg0, arg1, arg2, arg3, arg4, arg7, arg8, arg9, arg10, arg11, arg12};
+        String arg13 = "-stat";
+        String[] args = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13};
 
         System.out.println("Work direqtory: " + System.getProperty("user.dir"));
         String argsStr = "";

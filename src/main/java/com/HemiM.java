@@ -1,6 +1,7 @@
 package com;
 
 import com.args.HemiMArgs;
+import com.bean.HemiMInfo;
 import com.bean.MHapInfo;
 import com.bean.Region;
 import com.common.Util;
@@ -40,6 +41,7 @@ public class HemiM {
         } else if (args.getBedFile() != null && !args.getBedFile().equals("")) {
             regionList = util.parseBedFile(args.getBedFile());
         } else {
+            List<Region> wholeRegionList = new ArrayList<>();
             Map<String, List<Integer>> cpgPostListMap = util.parseWholeCpgFile(args.getCpgPath());
             Iterator<String> iterator = cpgPostListMap.keySet().iterator();
             while (iterator.hasNext()) {
@@ -49,12 +51,15 @@ public class HemiM {
                 region.setChrom(chrom);
                 region.setStart(cpgPostList.get(0));
                 region.setEnd(cpgPostList.get(cpgPostList.size() - 1));
-                regionList.add(region);
+                wholeRegionList.add(region);
             }
 
+            for (Region region : wholeRegionList) {
+                regionList.addAll(util.splitRegionToSmallRegion(region, 1000000, 0));
+            }
             Collections.sort(regionList, new Comparator<Region>() {
                 public int compare(Region o1, Region o2) {
-                    return o1.getChrom().compareTo(o2.getChrom());
+                    return o1.getChrom().compareTo(o2.getChrom()) * 10 + o1.getStart().compareTo(o2.getStart());
                 }
             });
         }
@@ -63,7 +68,16 @@ public class HemiM {
         List<String> barcodeList = util.parseBcFile(args.getBcFile());
 
         // create the output directory and file
-        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".hemi-methylation.txt");
+        BufferedWriter hemiMWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".hemiM.txt");
+        BufferedWriter statWriter = null;
+        if (args.getStat()) {
+            statWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".hemiMStat.txt");
+            String statHead = "chrom\tpos";
+            for (String barcode : barcodeList) {
+                statHead += "\t" + barcode;
+            }
+            statWriter.write(statHead + "\ttotal\n");
+        }
 
         for (Region region : regionList) {
             // parse the mhap file
@@ -82,6 +96,11 @@ public class HemiM {
                 log.info("Region " + region.toHeadString() + " has no cpg position.Skip...");
                 continue;
             }
+
+            // hemiM list
+            List<String> hemiMIndexList = new ArrayList<>();
+            List<HemiMInfo> hemiMInfoList = new ArrayList<>(); //
+            List<HemiMInfo> unHemiMInfoList = new ArrayList<>(); // has 2 strands but no hemiM
 
             Iterator<String> iterator = mHapListMap.keySet().iterator();
             while (iterator.hasNext()) {
@@ -130,20 +149,69 @@ public class HemiM {
                     }
 
                     for (int i = 0; i < cpgPosListInRegion.size(); i++) {
+                        HemiMInfo hemiMInfo = new HemiMInfo();
+                        hemiMInfo.setChrom(region.getChrom());
+                        hemiMInfo.setPos(cpgPosListInRegion.get(i));
+                        hemiMInfo.setCpg(String.valueOf(plusList[i]));
+                        hemiMInfo.setBarCode(mHapInfoList.get(0).getBarcode());
                         if (plusList[i] != null && minusList[i] != null && plusList[i] != minusList[i]) {
-                            String barCode = mHapInfoList.get(0).getBarcode();
-                            bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  String.valueOf(plusList[i]) +
-                                    "\t" + "+" + "\t" + barCode + "\n");
-                            bufferedWriter.write(region.getChrom() + "\t" + cpgPosListInRegion.get(i) + "\t" +  String.valueOf(minusList[i]) +
-                                    "\t" + "-" + "\t" + barCode + "\n");
+                            hemiMWriter.write(hemiMInfo.printPlusStrand());
+                            hemiMInfo.setCpg(String.valueOf(minusList[i]));
+                            hemiMWriter.write(hemiMInfo.printMinusStrand());
+                            if (!hemiMIndexList.contains(hemiMInfo.index())) {
+                                hemiMIndexList.add(hemiMInfo.index());
+                            }
+                            hemiMInfoList.add(hemiMInfo);
+                        } else if (plusList[i] != null && minusList[i] != null && plusList[i] == minusList[i]) {
+                            unHemiMInfoList.add(hemiMInfo);
                         }
                     }
                 }
             }
+
+            Collections.sort(hemiMIndexList, new Comparator<String>() {
+                public int compare(String o1, String o2) {
+                    String chrom1 = o1.split("\t")[0];
+                    String chrom2 = o2.split("\t")[0];
+                    Integer start1 = Integer.valueOf(o1.split("\t")[1]);
+                    Integer start2 = Integer.valueOf(o2.split("\t")[1]);
+                    return chrom1.compareTo(chrom2) * 10 + start1.compareTo(start2);
+                }
+            });
+
+            if (args.getStat()) {
+                // hemiM-barcode count array
+                int[][] statArray = new int[hemiMIndexList.size()][barcodeList.size() + 1];
+                for (HemiMInfo hemiMInfo : hemiMInfoList) {
+                    Integer row = hemiMIndexList.indexOf(hemiMInfo.index());
+                    Integer col = barcodeList.indexOf(hemiMInfo.getBarCode());
+                    statArray[row][col] = 2;
+                    statArray[row][barcodeList.size()] += 1;
+                }
+                for (HemiMInfo unHemiMInfo : unHemiMInfoList) {
+                    Integer row = hemiMIndexList.indexOf(unHemiMInfo.index());
+                    if (row >= 0) {
+                        Integer col = barcodeList.indexOf(unHemiMInfo.getBarCode());
+                        statArray[row][col] = 1;
+                    } else {
+                        continue;
+                    }
+                }
+
+                for (int i = 0; i < hemiMIndexList.size(); i++) {
+                    String statLine = hemiMIndexList.get(i);
+                    for (int j = 0; j < barcodeList.size() + 1; j++) {
+                        statLine += "\t" + statArray[i][j];
+                    }
+                    statWriter.write(statLine + "\n");
+                }
+            }
         }
 
-        bufferedWriter.close();
-
+        hemiMWriter.close();
+        if (args.getStat()) {
+            statWriter.close();
+        }
         log.info("HemiM end!");
     }
 

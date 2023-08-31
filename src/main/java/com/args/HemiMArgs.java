@@ -19,6 +19,8 @@ public class HemiMArgs implements Serializable {
     public String outputDir = "";
     @Annotation("prefix of the output file(s)")
     public String tag = "hemiM.out";
+    @Annotation("whether stat the hemiM count of barcodes")
+    public Boolean stat = false;
 
     public String getMhapPath() {
         return mhapPath;
@@ -70,5 +72,13 @@ public class HemiMArgs implements Serializable {
 
     public void setTag(String tag) {
         this.tag = tag;
+    }
+
+    public Boolean getStat() {
+        return stat;
+    }
+
+    public void setStat(Boolean stat) {
+        this.stat = stat;
     }
 }

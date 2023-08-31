@@ -90,7 +90,7 @@ public class Main {
         for(Field field : fields) {
             String annotation = field.getAnnotation(Annotation.class).value();
             Option option = null;
-            if (field.getType().equals(boolean.class)) {
+            if (field.getType().equals(boolean.class) || field.getType().equals(Boolean.class)) {
                 option = OptionBuilder.withLongOpt(field.getName()).withDescription(annotation).create(field.getName());
             } else {
                 option = OptionBuilder.withLongOpt(field.getName()).hasArg().withDescription(annotation).create(field.getName());
@@ -290,6 +290,9 @@ public class Main {
                 }
                 hemiMArgs.setOutputDir(commandLine.getOptionValue("outputDir"));
                 hemiMArgs.setTag(commandLine.getOptionValue("tag"));
+                if (commandLine.hasOption("stat")) {
+                    hemiMArgs.setStat(true);
+                }
             }
         } else {
             System.out.println("The paramter is null");
