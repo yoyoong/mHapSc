@@ -207,6 +207,7 @@ public class Convert {
             return false;
         }
 
+        log.info("Read allc file start......");
         FileInputStream fileInputStream = new FileInputStream(args.getInputPath());
         GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
         InputStreamReader inputStreamReader = new InputStreamReader(gzipInputStream);
@@ -215,13 +216,22 @@ public class Convert {
         List<Integer> cpgPostList = new ArrayList<>();
         String inputFileName = new File(args.getInputPath()).getName();
         String barCode = inputFileName.substring(0, inputFileName.indexOf("_"));
-        String lastChrom = "";
-        String thisChrom = "";
-        String lastStrand = "";
-        String thisStrand = "";
-        String cpgStr = "";
-        List<AllcInfo> allcInfoList = new ArrayList<>(); // llcInfo line list from last extend end to this extend end
+        String plusLastChrom = "";
+        String plusThisChrom = "";
+        String plusCpgStr = "";
+        String minusLastChrom = "";
+        String minusThisChrom = "";
+        String minusCpgStr = "";
+        List<AllcInfo> plusAllcInfoList = new ArrayList<>(); // llcInfo line list from last extend end to this extend end
+        List<AllcInfo> minusAllcInfoList = new ArrayList<>(); // llcInfo line list from last extend end to this extend end
+        List<MHapInfo> mHapInfoList = new ArrayList<>();
+        Integer num = 0;
         while (allcLine != null && !allcLine.equals("")) {
+            num++;
+            if (num % 10000000 == 0) {
+                log.info("Read allc file completed " + num + " line.");
+            }
+
             allcLine = bufferedReader.readLine();
             if (allcLine == null || allcLine.equals("") || allcLine.split("\t").length < 6) {
                 continue;
@@ -239,66 +249,127 @@ public class Convert {
             allcInfo.setCov(Integer.valueOf(allcLine.split("\t")[5]));
             allcInfo.setMethylated(Integer.valueOf(allcLine.split("\t")[6]));
 
-            // check this chrom whether equal with last chrom
-            thisChrom = allcInfo.getChromosome();
-            if (!lastChrom.equals("") && !thisChrom.equals(lastChrom)) {
-                cpgPostList = cpgPostListMap.get(thisChrom);
-                if (allcInfoList.size() > 0) {
-                    bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+            if (allcInfo.getStrand().equals("+")) {
+                // check this chrom whether equal with last chrom
+                plusThisChrom = allcInfo.getChromosome();
+                if (!plusLastChrom.equals("") && !plusThisChrom.equals(plusLastChrom)) {
+                    cpgPostList = cpgPostListMap.get(plusThisChrom);
+                    if (plusAllcInfoList.size() > 0) {
+                        MHapInfo newMHapInfo = writeMHap(plusAllcInfoList, plusLastChrom, plusCpgStr, allcInfo.getStrand(), barCode);
+                        mHapInfoList.add(newMHapInfo);
+                        // bufferedWriter.write(writeMHap(plusAllcInfoList, plusLastChrom, plusCpgStr, allcInfo.getStrand(), barCode).print());
+                    }
+                    plusAllcInfoList = new ArrayList<>();
+                    plusCpgStr = "";
+                } else if (plusLastChrom.equals("")) {
+                    cpgPostList = cpgPostListMap.get(plusThisChrom);
                 }
-                allcInfoList = new ArrayList<>();
-                cpgStr = "";
-            } else if (lastChrom.equals("")) {
-                cpgPostList = cpgPostListMap.get(thisChrom);
-            }
-            lastChrom = thisChrom;
-            if (cpgPostList == null || cpgPostList.size() < 1) {
-                continue;
-            }
-
-            // check this strand whether equal with last strand
-            thisStrand = allcInfo.getStrand();
-            if (!lastStrand.equals("") && !thisStrand.equals(lastStrand)) {
-                if (allcInfoList.size() > 0) {
-                    bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+                plusLastChrom = plusThisChrom;
+                if (cpgPostList == null || cpgPostList.size() < 1) {
+                    continue;
                 }
-                allcInfoList = new ArrayList<>();
-                cpgStr = "";
-            }
-            lastStrand = thisStrand;
 
-            // check this cpg position whether follow with nanopolishList the last cpg position
-            Integer thisStartCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, allcInfo.getPosition());
-            if (thisStartCpgIndex < 0) {
-                continue;
-            }
-            Integer lastEndCpgIndex = thisStartCpgIndex;
-            if (allcInfoList.size() > 0) {
-                lastEndCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, allcInfoList.get(allcInfoList.size() - 1).getPosition());
-            }
-            if (lastEndCpgIndex > 0 && thisStartCpgIndex - lastEndCpgIndex > 1) {
-                if (allcInfoList.size() > 0) {
-                    bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+                // check this cpg position whether follow with nanopolishList the last cpg position
+                Integer thisStartCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, allcInfo.getPosition());
+                if (thisStartCpgIndex < 0) {
+                    continue;
                 }
-                allcInfoList = new ArrayList<>();
-                cpgStr = "";
-            }
+                Integer lastEndCpgIndex = thisStartCpgIndex;
+                if (plusAllcInfoList.size() > 0) {
+                    lastEndCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, plusAllcInfoList.get(plusAllcInfoList.size() - 1).getPosition());
+                }
+                if (lastEndCpgIndex > 0 && thisStartCpgIndex - lastEndCpgIndex > 1) {
+                    if (plusAllcInfoList.size() > 0) {
+                        MHapInfo newMHapInfo = writeMHap(plusAllcInfoList, plusLastChrom, plusCpgStr, allcInfo.getStrand(), barCode);
+                        mHapInfoList.add(newMHapInfo);
+                        // bufferedWriter.write(writeMHap(plusAllcInfoList, plusLastChrom, plusCpgStr, allcInfo.getStrand(), barCode).print());
+                    }
+                    plusAllcInfoList = new ArrayList<>();
+                    plusCpgStr = "";
+                }
 
-            if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) <= 0.1) {
-                cpgStr += "0";
-            } else if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) >= 0.9) {
-                cpgStr += "1";
+                if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) <= 0.1) {
+                    plusCpgStr += "0";
+                } else if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) >= 0.9) {
+                    plusCpgStr += "1";
+                } else {
+                    continue;
+                }
+                plusAllcInfoList.add(allcInfo);
             } else {
-                continue;
+                // check this chrom whether equal with last chrom
+                minusThisChrom = allcInfo.getChromosome();
+                if (!minusLastChrom.equals("") && !minusThisChrom.equals(minusLastChrom)) {
+                    cpgPostList = cpgPostListMap.get(minusThisChrom);
+                    if (minusAllcInfoList.size() > 0) {
+                        MHapInfo newMHapInfo = writeMHap(minusAllcInfoList, minusLastChrom, minusCpgStr, allcInfo.getStrand(), barCode);
+                        mHapInfoList.add(newMHapInfo);
+                        // bufferedWriter.write(writeMHap(minusAllcInfoList, minusLastChrom, minusCpgStr, allcInfo.getStrand(), barCode).print());
+                    }
+                    minusAllcInfoList = new ArrayList<>();
+                    minusCpgStr = "";
+                } else if (minusLastChrom.equals("")) {
+                    cpgPostList = cpgPostListMap.get(minusThisChrom);
+                }
+                minusLastChrom = minusThisChrom;
+                if (cpgPostList == null || cpgPostList.size() < 1) {
+                    continue;
+                }
+
+                // check this cpg position whether follow with nanopolishList the last cpg position
+                Integer thisStartCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, allcInfo.getPosition());
+                if (thisStartCpgIndex < 0) {
+                    continue;
+                }
+                Integer lastEndCpgIndex = thisStartCpgIndex;
+                if (minusAllcInfoList.size() > 0) {
+                    lastEndCpgIndex = util.indexOfList(cpgPostList, 0, cpgPostList.size() - 1, minusAllcInfoList.get(minusAllcInfoList.size() - 1).getPosition());
+                }
+                if (lastEndCpgIndex > 0 && thisStartCpgIndex - lastEndCpgIndex > 1) {
+                    if (minusAllcInfoList.size() > 0) {
+                        MHapInfo newMHapInfo = writeMHap(minusAllcInfoList, minusLastChrom, minusCpgStr, allcInfo.getStrand(), barCode);
+                        mHapInfoList.add(newMHapInfo);
+                        // bufferedWriter.write(writeMHap(minusAllcInfoList, minusLastChrom, minusCpgStr, allcInfo.getStrand(), barCode).print());
+                    }
+                    minusAllcInfoList = new ArrayList<>();
+                    minusCpgStr = "";
+                }
+
+                if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) <= 0.1) {
+                    minusCpgStr += "0";
+                } else if (((double) allcInfo.getMc()) / ((double) allcInfo.getCov()) >= 0.9) {
+                    minusCpgStr += "1";
+                } else {
+                    continue;
+                }
+                minusAllcInfoList.add(allcInfo);
             }
-            allcInfoList.add(allcInfo);
+            int d = 0;
         }
 
-        if (allcInfoList.size() > 0) { // print the last allcInfoList to mhap file
-            bufferedWriter.write(writeMHap(allcInfoList, lastChrom, cpgStr, lastStrand, barCode).print());
+        if (plusAllcInfoList.size() > 0) { // print the last allcInfoList to mhap file
+            MHapInfo newMHapInfo = writeMHap(plusAllcInfoList, plusLastChrom, plusCpgStr, "+", barCode);
+            mHapInfoList.add(newMHapInfo);
+            // bufferedWriter.write(writeMHap(plusAllcInfoList, plusLastChrom, plusCpgStr, "+", barCode).print());
+        }
+        if (minusAllcInfoList.size() > 0) { // print the last allcInfoList to mhap file
+            MHapInfo newMHapInfo = writeMHap(minusAllcInfoList, minusLastChrom, minusCpgStr, "-", barCode);
+            mHapInfoList.add(newMHapInfo);
+            // bufferedWriter.write(writeMHap(minusAllcInfoList, minusLastChrom, minusCpgStr, "-", barCode).print());
+        }
+        log.info("Read allc file end! Writing mhap file......");
+        Collections.sort(mHapInfoList, new Comparator<MHapInfo>() {
+            @Override
+            public int compare(MHapInfo s1, MHapInfo s2) {
+                return s1.getChrom().compareTo(s2.getChrom()) * 100 + s1.getStart().compareTo(s2.getStart()) * 10
+                        + s2.getStrand().compareTo(s1.getStrand());
+            }
+        });
+        for (MHapInfo mHapInfo : mHapInfoList) {
+            bufferedWriter.write(mHapInfo.print());
         }
 
-        log.info("convertAllc barCode:" + barCode + " end!");
+        log.info("Writing mhap file end!");
 
         return true;
     }
@@ -312,6 +383,7 @@ public class Convert {
         mHapLine.setCnt(1);
         mHapLine.setStrand(strand);
         mHapLine.setBarcode(badCode);
+        // log.info(mHapLine.print());
         return mHapLine;
     }
 

@@ -34,9 +34,9 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "convert";
         String arg1 = "-inputPath";
-        String arg2 = "GSM3742106_allc_180322_CEMBA_mm_P56_P63_1A_CEMBA180226_1A_1_CEMBA180226_1A_2_A10_AD001_indexed.tsv.gz";
+        String arg2 = "GSM2697589_scTrioSeq2Met_CRC01_MP1_144_allc.gz";
         String arg3 = "-cpgPath";
-        String arg4 = "mm10_CpG.gz";
+        String arg4 = "hg19_CpG.gz";
         String arg5 = "-outputDir";
         String arg6 = "outputDir";
         String arg7 = "-tag";
@@ -59,9 +59,9 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "tanghulu";
         String arg1 = "-mhapPath";
-        String arg2 = "/sibcb2/bioinformatics2/liaoxiqi/mhapSC/data/CRC_hg19.mhap.gz";
+        String arg2 = "CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
-        String arg4 = "/sibcb2/bioinformatics/iGenome/CpG/Idx/hg19_CpG.gz";
+        String arg4 = "hg19_CpG.gz";
         String arg5 = "-region";
         String arg6 = "chr1:228746134-228746234";
         String arg7 = "-outputDir";
@@ -90,7 +90,7 @@ public class MainTest extends TestCase {
         Main main = new Main();
         String arg0 = "R2";
         String arg1 = "-mhapPath";
-        String arg2 = "GSM5570296_tcell_t0.mhap.gz";
+        String arg2 = "CRC_hg19.mhap.gz";
         String arg3 = "-cpgPath";
         String arg4 = "hg19_CpG.gz";
         String arg5 = "-region";
