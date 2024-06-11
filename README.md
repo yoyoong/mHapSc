@@ -1,7 +1,8 @@
 # mHapSc
 mHapSc is a tool kit for analysis of single cell DNA methylation haplotypes.
 It has 7 sub-commands: convert, tanghulu, R2, MHBDiscovery, hemiM, track and flinkage.
-The source code of mHapSc is hosted in [github](https://github.yoyoong/mHapSc). It is written in java, and should run in Windows, Linux and macOS with java1.8 installed.
+The source code of mHapSc is hosted in [github](https://github.yoyoong/mHapSc). 
+It is written in java, and should run in Windows, Linux and macOS with java1.8 installed.
 
 ## Prerequisites
 The mHapSc requires the following dependencies:
@@ -16,11 +17,12 @@ java -jar mHapSc-1.0-jar-with-dependencies.jar [convert/merge/tanghulu/mHapView/
 ```
 
 ## convert
-Convert Single-cell methylation sequencing file or nanopore methylation sequencing file to mHap format file. 
-Single-cell methylation sequencing file was introduced in [scMethBank-Documentation](https://ngdc.cncb.ac.cn/methbank/scm/documentation#data).
-Nanopore methylation sequencing file was introduced in [Simpson JT et al., 2017](https://pubmed.ncbi.nlm.nih.gov/28218898/)
+Convert Single-cell methylation sequencing file or nanopore methylation sequencing file or allc methylation 
+sequencing file to mHap format file. Single-cell methylation sequencing file was introduced in [scMethBank-Documentation](https://ngdc.cncb.ac.cn/methbank/scm/documentation#data).
+Nanopore methylation sequencing file was introduced in [Simpson JT et al., 2017](https://pubmed.ncbi.nlm.nih.gov/28218898/).
+Allc methylation sequencing file was introduced in [Simpson JT et al., 2017](https://pubmed.ncbi.nlm.nih.gov/28218898/).
 ```Shell
-usage: java -jar mHapSc-1.0-jar-with-dependencies.jar convert --inputPath <in.bed/tsv.gz> --cpgPath <CpG.gz> [--region chr:start-end] --outputDir <outputDir> --tag <tag> [--nanopolish]
+usage: java -jar mHapSc-1.0-jar-with-dependencies.jar convert --inputPath <in.bed/.gz> --cpgPath <CpG.gz> [--region chr:start-end] --outputDir <outputDir> --tag <tag> [--nanopolish] [--allc]
 Options:
  -inputPath,--inputPath <args>   input file, Single-cell methylation sequencing file is bed.gz format, Nanopore methylation sequencin is tsv.gz format
  -cpgPath,--cpgPath <args>       genomic CpG file, gz format and indexed
@@ -28,10 +30,41 @@ Options:
  -outputDir,--outputDir <args>   output directory, created in advance
  -tag,--tag <args>               prefix of the output file(s) [convert.out]
  -nanopolish,--nanopolish        indicates whether input file is nanopore methylation sequencing file
+ -allcFlag,--allcFlag            whether inputPath is allc methylation sequencing file
  ```
+Single-cell methylation sequencing file example:
+```
+chr1	G	3000851	CHH	CC	0.1	1	10
+chr1	C	3001624	CHG	CA	0.0	0	9
+chr1	C	3001631	CG	CG	1.0	5	5
+chr1	G	3001632	CG	CG	0.9	9	10
+```
 Example of usage:
 ```Shell
-java -jar mHapSc-1.0-jar-with-dependencies.jar convert -inputPath methylation-log.tsv.gz -cpgPath hg38_CpG.gz -outputDir outputDir -tag nanopolish_test -nanopolish
+java -jar mHapSc-1.0-jar-with-dependencies.jar convert -inputPath example.bed -cpgPath hg19_CpG.gz -outputDir outputDir -tag test
+```
+Nanopore methylation sequencing file example:
+```
+chromosome	strand	start	end	read_name	log_lik_ratio	log_lik_methylated	log_lik_unmethylated	num_calling_strands	num_motifs	motif	sequence
+chr1	+	67272185	67272185	3cb639f1-c56d-47e6-ac37-881dd0909f61	11.40	-149.50	-160.91	1	1	GC	TTAGMTAG
+chr1	+	67272233	67272233	3cb639f1-c56d-47e6-ac37-881dd0909f61	14.81	-135.37	-150.18	1	1	GC	AATGMTAT
+chr1	+	67272257	67272261	3cb639f1-c56d-47e6-ac37-881dd0909f61	-10.83	-125.52	-114.69	1	2	GC	CTAGMCTGMTAA
+chr1	+	67272279	67272279	3cb639f1-c56d-47e6-ac37-881dd0909f61	-5.39	-135.93	-130.54	1	1	GC	GAAGMTGT
+```
+Example of usage:
+```Shell
+java -jar mHapSc-1.0-jar-with-dependencies.jar convert -inputPath example.tsv.gz -cpgPath hg19_CpG.gz -outputDir outputDir -tag nanopolish_test -nanopolish
+```
+Allc methylation sequencing file example:
+```
+chr1	10040	+	CCC	1	1	1
+chr1	10041	+	CCT	2	2	1
+chr1	10042	+	CTA	2	2	1
+chr1	10046	+	CCC	2	2	1
+```
+Example of usage:
+```Shell
+java -jar mHapSc-1.0-jar-with-dependencies.jar convert -inputPath example.txt.gz -cpgPath hg19_CpG.gz -outputDir outputDir -tag nanopolish_test -allc
 ```
 
 ## tanghulu
