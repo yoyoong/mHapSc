@@ -39,7 +39,7 @@ public class Stat {
             Region region = util.parseRegion(args.getRegion());
             regionList.add(region);
         } else {
-            BedFile bedFile = new BedFile(args.getBedPath());
+            BedFile bedFile = new BedFile(args.getBedFile());
             regionList = bedFile.parseWholeFile();
         }
 
@@ -55,7 +55,7 @@ public class Stat {
         for (String metric : metrics) {
             metricsList.add(metric);
         }
-        StatOutputFile statOutputFile = new StatOutputFile("", args.getOutputFile());
+        StatOutputFile statOutputFile = new StatOutputFile("", args.getTag() + ".txt");
         statOutputFile.setMetricsList(metricsList);
         String headString = "chr" + "\t" + "start" + "\t" + "end" + "\t" + "nStrands" + "\t" + "mBase" + "\t" + "cBase" + "\t"
                 + "tBase" + "\t" + "K4plus" + "\t" + "nDS" + "\t" + "nMS";
@@ -97,7 +97,8 @@ public class Stat {
     }
 
     private boolean checkArgs() {
-        if (!args.getRegion().equals("") && !args.getBedPath().equals("")) {
+        if (args.getRegion() != null && !args.getRegion().equals("") &&
+                args.getBedFile() != null && !args.getBedFile().equals("")) {
             log.error("Can not input region and bedPath at the same time.");
             return false;
         }

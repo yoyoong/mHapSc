@@ -12,7 +12,7 @@ public class ConvertArgs implements Serializable {
     public String cpgPath = "";
     @Annotation(Constants.OUTPUTDIR_DESCRIPTION)
     public String outputDir = "";
-    @Annotation(Constants.TAG_DESCRIPTION)
+    @Annotation(Constants.TAG_DESCRIPTION + " [convert.out]")
     public String tag = "convert.out";
     @Annotation(Constants.NANOPOLISHFLAG_DESCRIPTION)
     public boolean nanopolishFlag = false;

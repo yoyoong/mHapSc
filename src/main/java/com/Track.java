@@ -181,7 +181,7 @@ public class Track {
             if (mHapLine.split("\t").length < 6) {
                 continue;
             }
-            if (args.getBcFile().equals("") && !barcodeList.contains(mHapLine.split("\t")[6])) {
+            if (barcodeList.size() > 0 && !barcodeList.contains(mHapLine.split("\t")[6])) {
                 continue;
             }
             MHapInfo mHapInfo = new MHapInfo();

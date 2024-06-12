@@ -112,7 +112,7 @@ public class R2 {
 
     private boolean getR2(List<String> barcodeList, List<Integer> cpgPosList) throws Exception {
         // create the output directory and file
-        String r2FileName = args.getTag() + "_" + region.toFileString() + ".cpg_sites_rsquare.txt";
+        String r2FileName = args.getTag() + "_" + region.toFileString() + ".R2.txt";
         BufferedWriter r2BufferedWriter = util.createOutputFile(args.getOutputDir(), r2FileName);
 
         // 写入文件头部
@@ -230,7 +230,10 @@ public class R2 {
         CategoryPlot cellCntPlot = createCellCntPlot(mHapListMap, cpgPosListInRegion);
         CategoryPlot mmPlot = createMMPlot(cpgPosListInRegion, cpgHpMatInRegion);
         XYPlot whiteBlackPlot = createWhiteBlackPlot(cpgHpMatInRegion);
-        XYPlot bedRegionPlot = createBedRegionPlot(cpgPosListInRegion);
+        XYPlot bedRegionPlot = new XYPlot();
+        if (args.getBedFile() != null && !args.getBedFile().equals("")) {
+            bedRegionPlot = createBedRegionPlot(cpgPosListInRegion);
+        }
         XYPlot R2HeatMapPlot = createR2HeatMapPlot(cpgHpMatInRegion);
 
         // 画布大小设置
@@ -243,13 +246,15 @@ public class R2 {
         heightList.add(cpgHpMatInRegion[0].length * 5);
         plotList.add(whiteBlackPlot);
         heightList.add(cpgHpMatInRegion[0].length * 20);
-        plotList.add(bedRegionPlot);
-        heightList.add(cpgHpMatInRegion[0].length * 3);
+        if (args.getBedFile() != null && !args.getBedFile().equals("")) {
+            plotList.add(bedRegionPlot);
+            heightList.add(cpgHpMatInRegion[0].length * 3);
+        }
         plotList.add(R2HeatMapPlot);
         heightList.add(cpgHpMatInRegion[0].length * 15);
 
         // 输出到文件
-        String outputPath = args.getOutputDir() + "/" + args.getTag() + "_" + region.toFileString() + ".cpg_sites_rsquare.pdf";
+        String outputPath = args.getOutputDir() + "/" + args.getTag() + "_" + region.toFileString() + ".mhapView.pdf";
         saveAsFile(plotList, outputPath, width, heightList);
 
         return true;
@@ -506,7 +511,7 @@ public class R2 {
     }
 
     private XYPlot createR2HeatMapPlot(Integer[][] cpgHpMatInRegion) throws IOException {
-        String r2FileName = args.getOutputDir() + "/" + args.getTag() + "_" + region.toFileString() + ".cpg_sites_rsquare.txt";
+        String r2FileName = args.getOutputDir() + "/" + args.getTag() + "_" + region.toFileString() + ".R2.txt";
         File r2File = new File(r2FileName);
         BufferedReader bufferedReader = new BufferedReader(new FileReader(r2File));
         String r2Line = bufferedReader.readLine();

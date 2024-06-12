@@ -13,13 +13,13 @@ public class ScStatArgs implements Serializable {
     @Annotation(Constants.REGION_DESCRIPTION)
     public String region = "";
     @Annotation(Constants.BEDPATH_DESCRIPTION)
-    public String bedPath = "";
+    public String bedFile = "";
     @Annotation(Constants.BCFILE_DESCRIPTION)
     public String bcFile = "";
     @Annotation(Constants.OUTPUTDIR_DESCRIPTION)
     public String outputDir = "";
-    @Annotation(Constants.TAG_DESCRIPTION)
-    public String tag = "ScStat_out";
+    @Annotation(Constants.TAG_DESCRIPTION + " [ScStat.out]")
+    public String tag = "ScStat.out";
     @Annotation(Constants.METRICS_MM_DESCRIPTION)
     public String metrics = "";
 
@@ -47,12 +47,12 @@ public class ScStatArgs implements Serializable {
         this.region = region;
     }
 
-    public String getBedPath() {
-        return bedPath;
+    public String getBedFile() {
+        return bedFile;
     }
 
-    public void setBedPath(String bedPath) {
-        this.bedPath = bedPath;
+    public void setBedFile(String bedFile) {
+        this.bedFile = bedFile;
     }
 
     public String getBcFile() {

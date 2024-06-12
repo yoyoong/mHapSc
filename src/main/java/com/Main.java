@@ -3,7 +3,10 @@ package com;
 import com.args.*;
 import com.common.Annotation;
 import org.apache.commons.cli.*;
+import org.apache.commons.compress.utils.Charsets;
 
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -24,7 +27,9 @@ public class Main {
         System.setProperty("java.awt.headless", "true");
 
         if (args != null && args[0] != null && !"".equals(args[0])) {
-            if (args[0].equals("convert")) {
+            if (args[0].equals("help") || args[0].equals("h") || args[0].equals("-help") || args[0].equals("-h")) {
+                printHelp();
+            } else if (args[0].equals("convert")) {
                 ConvertArgs convertArgs = parseConvert(args);
                 if (convertArgs != null) {
                     convert.convert(convertArgs);
@@ -78,8 +83,28 @@ public class Main {
                 System.out.println("unrecognized command:" + args[0]);
             }
         } else { // show the help message
-
+            printHelp();
         }
+    }
+
+    private static void printHelp() {
+        PrintWriter pw = new PrintWriter(new OutputStreamWriter(System.out, Charsets.UTF_8), true);
+        pw.println("mHapSc: a Java toolkit for the analysis of single-cell DNA methylation haplotypes.");
+        pw.println("Usage: java -jar mHapSc <command> [options]");
+        pw.println("\nCommands:");
+
+        HelpFormatter hf = new HelpFormatter();
+        hf.setWidth(110);
+//        hf.setSyntaxPrefix("");
+        pw.println("\tconvert\t\t\tconvert raw sequencing file to mHap file");
+        pw.println("\ttanghulu\t\t\tvisualize the methylation status of the reads that cover a given region.");
+        pw.println("\tR2\t\tshow linkage disequilibrium (LD) R2 scores of CpGs in a region");
+        pw.println("\tMHBDiscovery\t\tidentification of methylation haplotype blocks within a region or genome-wide");
+        pw.println("\themiM\t\t\tdiscovery and statistics the hemi-methylation CpG sites");
+        pw.println("\ttrack\t\tcalculate DNA methylation metrics for mHaps that cover each CpG site across the genome");
+        pw.println("\tflinkage\t\tcalculates the linkage disequilibrium correlation of two remote regions");
+        pw.println("\tstat\t\t\tcalculate the methylation statistics in a single region or multiple regions");
+        pw.println("\tscStat\t\tcalculate the average methylation level in a single region or multiple regions");
     }
 
     private static Options getOptions(Field[] declaredFields) {
@@ -197,7 +222,7 @@ public class Main {
                 }
                 r2Args.setOutputDir(commandLine.getOptionValue("outputDir"));
                 r2Args.setTag(commandLine.getOptionValue("tag"));
-                if (commandLine.hasOption("mHapView")) {
+                if (commandLine.hasOption("mhapView")) {
                     r2Args.setMhapView(true);
                 }
                 if (commandLine.hasOption("strand")) {
@@ -395,13 +420,13 @@ public class Main {
                 if (commandLine.hasOption("region")) {
                     statArgs.setRegion(commandLine.getOptionValue("region"));
                 }
-                if (commandLine.hasOption("bedPath")) {
-                    statArgs.setBedPath(commandLine.getOptionValue("bedPath"));
+                if (commandLine.hasOption("bedFile")) {
+                    statArgs.setBedFile(commandLine.getOptionValue("bedFile"));
                 }
                 if (commandLine.hasOption("bcFile")) {
                     statArgs.setBcFile(commandLine.getOptionValue("bcFile"));
                 }
-                statArgs.setOutputFile(commandLine.getOptionValue("outputFile"));
+                statArgs.setTag(commandLine.getOptionValue("tag"));
                 if (commandLine.hasOption("minK")) {
                     statArgs.setMinK(Integer.valueOf(commandLine.getOptionValue("minK")));
                 }
@@ -441,8 +466,8 @@ public class Main {
                 if (commandLine.hasOption("region")) {
                     scStatArgs.setRegion(commandLine.getOptionValue("region"));
                 }
-                if (commandLine.hasOption("bedPath")) {
-                    scStatArgs.setBedPath(commandLine.getOptionValue("bedPath"));
+                if (commandLine.hasOption("bedFile")) {
+                    scStatArgs.setBedFile(commandLine.getOptionValue("bedFile"));
                 }
                 if (commandLine.hasOption("bcFile")) {
                     scStatArgs.setBcFile(commandLine.getOptionValue("bcFile"));
@@ -475,7 +500,7 @@ public class Main {
             } else {
                 csnArgs.setmHapPath(commandLine.getOptionValue("mHapPath"));
                 csnArgs.setCpgPath(commandLine.getOptionValue("cpgPath"));
-                csnArgs.setBedPath(commandLine.getOptionValue("bedPath"));
+                csnArgs.setBedFile(commandLine.getOptionValue("bedFile"));
                 csnArgs.setBcFile(commandLine.getOptionValue("bcFile"));
                 if (commandLine.hasOption("boxSize")) {
                     csnArgs.setBoxSize(Double.valueOf(commandLine.getOptionValue("boxSize")));

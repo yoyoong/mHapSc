@@ -13,7 +13,7 @@ public class CSNArgs implements Serializable {
     @Annotation(Constants.CPGPATH_DESCRIPTION)
     public String cpgPath = "";
     @Annotation(Constants.BEDPATH_DESCRIPTION)
-    public String bedPath = "";
+    public String bedFile = "";
     @Annotation(Constants.BOXSIZE_DESCRIPTION)
     public Double boxSize = 0.1;
     @Annotation(Constants.ALPHA_DESCRIPTION)
@@ -49,12 +49,12 @@ public class CSNArgs implements Serializable {
         this.cpgPath = cpgPath;
     }
 
-    public String getBedPath() {
-        return bedPath;
+    public String getBedFile() {
+        return bedFile;
     }
 
-    public void setBedPath(String bedPath) {
-        this.bedPath = bedPath;
+    public void setBedFile(String bedFile) {
+        this.bedFile = bedFile;
     }
 
     public Double getBoxSize() {

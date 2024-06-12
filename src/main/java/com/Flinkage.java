@@ -59,7 +59,7 @@ public class Flinkage {
         }
 
         // create the output file
-        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + ".longrange.txt");
+        BufferedWriter bufferedWriter = util.createOutputFile(args.getOutputDir(), args.getTag() + "flinkage.txt");
 
         for (int i = 0; i < regionList.size(); i++) {
             //log.info("Calculate " + regionList.get(i).toHeadString() + " start!");

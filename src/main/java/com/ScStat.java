@@ -42,7 +42,7 @@ public class ScStat {
             Region region = util.parseRegion(args.getRegion());
             regionList.add(region);
         } else {
-            BedFile bedFile = new BedFile(args.getBedPath());
+            BedFile bedFile = new BedFile(args.getBedFile());
             regionList = bedFile.parseWholeFile();
         }
 
@@ -109,7 +109,7 @@ public class ScStat {
         if (args.getCpgPath().equals("")) {
             log.error("The cpg file cannot be empty!");
         }
-        if (!args.getRegion().equals("") && !args.getBedPath().equals("")) {
+        if (!args.getRegion().equals("") && !args.getBedFile().equals("")) {
             log.error("Can not input region and bedPath at the same time.");
             return false;
         }

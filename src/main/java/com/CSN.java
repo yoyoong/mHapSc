@@ -33,7 +33,7 @@ public class CSN {
         args = csnArgs;
         mHapFile = new MHapFile(args.getmHapPath());
         cpgFile = new CpgFile(args.getCpgPath());
-        bedFile = new BedFile(args.getBedPath());
+        bedFile = new BedFile(args.getBedFile());
         barcodeFile = new BarcodeFile(args.getBcFile());
         csnOutputFile = new CSNOutputFile(args.getOutputDir(), args.getTag() + ".CSN.txt");
 
@@ -133,7 +133,7 @@ public class CSN {
             log.error("cpgPath can not be null.");
             return false;
         }
-        if (args.getBedPath().equals("")) {
+        if (args.getBedFile().equals("")) {
             log.error("bedPath can not be null.");
             return false;
         }
