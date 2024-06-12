@@ -25,7 +25,7 @@ It has 9 sub-commands: convert, tanghulu, R2, MHBDiscovery, hemiM, track, flinka
 
 ```
 mHapSc: a Java toolkit for the analysis of single-cell DNA methylation haplotypes
-Usage: java -jar mHapSuite <command> [options]
+Usage: java -jar mHapSc <command> [options]
 
 Commands:
     convert         convert raw sequencing file to mHap file
