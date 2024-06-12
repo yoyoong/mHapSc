@@ -12,7 +12,7 @@ The DNA methylation status of CpG sites on the same fragment represents a discre
 The mHap-level metrics were demonstrated to be promising cancer biomarkers and explain more gene expression variation than average methylation. 
 However, most existing tools focus on average methylation and neglect mHap patterns. 
 Previously, we have developped [mHapTk](https://github.com/CCCKW/mHapTk), a comprehensive toolkit for the analysis of DNA methylation haplotypes
-and [mHapSuite](https://github.com/yoyoong/mHapSuite) a Java toolkit for the analysis of bulk mHaps.
+and [mHapSuite](https://github.com/yoyoong/mHapSuite), a Java toolkit for the analysis of bulk mHaps.
 Here, we present mHapSc, a Java toolkit for the analysis of single-cell mHaps.
 
 # Installation
