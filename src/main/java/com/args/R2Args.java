@@ -12,7 +12,7 @@ public class R2Args implements Serializable {
     public String cpgPath = "";
     @Annotation(Constants.REGION_DESCRIPTION)
     public String region = "";
-    @Annotation(Constants.BCFILE_DESCRIPTION)
+    @Annotation(Constants.BCFILE2_DESCRIPTION)
     public String bcFile = "";
     @Annotation(Constants.OUTPUTDIR_DESCRIPTION)
     public String outputDir = "";

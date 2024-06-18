@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class CSNArgs implements Serializable {
     @Annotation(Constants.MHAPPATH_DESCRIPTION)
     public String mHapPath = "";
-    @Annotation(Constants.BCFILE_DESCRIPTION)
+    @Annotation(Constants.BCFILE2_DESCRIPTION)
     public String bcFile = "";
     @Annotation(Constants.CPGPATH_DESCRIPTION)
     public String cpgPath = "";

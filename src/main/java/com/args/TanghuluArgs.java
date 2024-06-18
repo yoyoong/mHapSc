@@ -12,9 +12,9 @@ public class TanghuluArgs implements Serializable {
     public String cpgPath = "";
     @Annotation(Constants.REGION_DESCRIPTION)
     public String region = "";
-    @Annotation("outcut")
+    @Annotation(Constants.OUTCUT_DESCRIPTION)
     public Integer outcut = 2000;
-    @Annotation(Constants.BCFILE_DESCRIPTION)
+    @Annotation(Constants.BCFILE1_DESCRIPTION)
     public String bcFile = "";
     @Annotation(Constants.OUTPUTDIR_DESCRIPTION)
     public String outputDir = "";

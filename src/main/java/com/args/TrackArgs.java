@@ -18,7 +18,7 @@ public class TrackArgs implements Serializable {
     public String outputDir = "";
     @Annotation(Constants.TAG_DESCRIPTION + " [track.out]")
     public String tag = "track.out";
-    @Annotation(Constants.BCFILE_DESCRIPTION)
+    @Annotation(Constants.BCFILE2_DESCRIPTION)
     public String bcFile = "";
     @Annotation(Constants.METRICS_MMR2_DESCRIPTION)
     public String metrics = "";

@@ -16,7 +16,7 @@ public class StatArgs implements Serializable {
     public String region = "";
     @Annotation(Constants.BEDPATH_DESCRIPTION)
     public String bedFile = "";
-    @Annotation(Constants.BCFILE_DESCRIPTION)
+    @Annotation(Constants.BCFILE2_DESCRIPTION)
     public String bcFile = "";
     @Annotation(Constants.TAG_DESCRIPTION + " [stat.out]")
     public String tag = "stat.out";

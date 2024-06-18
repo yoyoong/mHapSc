@@ -16,7 +16,7 @@ public class ConvertArgs implements Serializable {
     public String tag = "convert.out";
     @Annotation(Constants.NANOPOLISHFLAG_DESCRIPTION)
     public boolean nanopolishFlag = false;
-    @Annotation(Constants.NANOPOLISHFLAG_DESCRIPTION)
+    @Annotation(Constants.ALLCFLAG_DESCRIPTION)
     public boolean allcFlag = false;
 
     public String getInputPath() {

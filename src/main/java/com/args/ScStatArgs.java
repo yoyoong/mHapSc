@@ -14,7 +14,7 @@ public class ScStatArgs implements Serializable {
     public String region = "";
     @Annotation(Constants.BEDPATH_DESCRIPTION)
     public String bedFile = "";
-    @Annotation(Constants.BCFILE_DESCRIPTION)
+    @Annotation(Constants.BCFILE2_DESCRIPTION)
     public String bcFile = "";
     @Annotation(Constants.OUTPUTDIR_DESCRIPTION)
     public String outputDir = "";
